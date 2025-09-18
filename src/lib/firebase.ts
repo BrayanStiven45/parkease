@@ -33,8 +33,8 @@ if (process.env.NODE_ENV === 'development' && typeof window !== 'undefined') {
       }
     };
     
-    createMockUser('admin@parkease.com');
-    createMockUser('user@parkease.com');
+    // createMockUser('admin@parkease.com');
+    // createMockUser('user@parkease.com');
   } catch(e) {
     console.error('Failed to connect to auth emulator', e);
   }
