@@ -1,6 +1,6 @@
 // Import the functions you need from the SDKs you need
 import { initializeApp, getApps, getApp } from "firebase/app";
-import { getAuth, connectAuthEmulator } from "firebase/auth";
+import { getAuth, connectAuthEmulator }  from "firebase/auth";
 import { createUserWithEmailAndPassword } from "firebase/auth";
 
 const firebaseConfig = {
@@ -19,21 +19,25 @@ const auth = getAuth(app);
 
 // Create mock users in development
 if (process.env.NODE_ENV === 'development' && typeof window !== 'undefined') {
-  connectAuthEmulator(auth, "http://localhost:9099");
-  
-  const createMockUser = async (email: string) => {
-    try {
-      await createUserWithEmailAndPassword(auth, email, "password");
-      console.log(`Mock user ${email} created.`);
-    } catch (error: any) {
-      if (error.code !== 'auth/email-already-in-use') {
-        console.error(`Error creating mock user ${email}:`, error);
+  try {
+    connectAuthEmulator(auth, "http://localhost:9099", { disableWarnings: true });
+    
+    const createMockUser = async (email: string) => {
+      try {
+        await createUserWithEmailAndPassword(auth, email, "password");
+        console.log(`Mock user ${email} created.`);
+      } catch (error: any) {
+        if (error.code !== 'auth/email-already-in-use') {
+          console.error(`Error creating mock user ${email}:`, error);
+        }
       }
-    }
-  };
-  
-  createMockUser('admin@parkease.com');
-  createMockUser('user@parkease.com');
+    };
+    
+    createMockUser('admin@parkease.com');
+    createMockUser('user@parkease.com');
+  } catch(e) {
+    console.error('Failed to connect to auth emulator', e);
+  }
 }
 
 export { app, auth };
