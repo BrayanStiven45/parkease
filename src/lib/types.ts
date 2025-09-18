@@ -17,3 +17,12 @@ export type Tariff = {
   name: string;
   pricePerHour: number;
 };
+
+export type Branch = {
+    id: string;
+    name: string;
+    location: string;
+    totalSpots: number;
+    occupiedSpots: number;
+    revenue: number;
+}

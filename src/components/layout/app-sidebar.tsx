@@ -9,16 +9,24 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
 } from '@/components/ui/sidebar';
-import { Bot, Car, History, LayoutDashboard } from 'lucide-react';
+import { Bot, Building, Car, History, LayoutDashboard } from 'lucide-react';
+import { useAuth } from '@/contexts/auth-context';
 
 const menuItems = [
-  { href: '/', label: 'Dashboard', icon: LayoutDashboard },
+  { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
   { href: '/history', label: 'Parking History', icon: History },
   { href: '/rate-suggester', label: 'AI Rate Suggester', icon: Bot },
 ];
 
+const adminMenuItems = [
+    { href: '/branches', label: 'Branches', icon: Building },
+];
+
 export default function AppSidebar() {
   const pathname = usePathname();
+  const { isAdmin } = useAuth();
+
+  const allMenuItems = isAdmin ? [...menuItems, ...adminMenuItems] : menuItems;
 
   return (
     <Sidebar collapsible="icon">
@@ -30,20 +38,18 @@ export default function AppSidebar() {
       </SidebarHeader>
       <SidebarContent>
         <SidebarMenu>
-          {menuItems.map((item) => (
+          {allMenuItems.map((item) => (
             <SidebarMenuItem key={item.href}>
-              <Link href={item.href} legacyBehavior passHref>
-                <SidebarMenuButton
-                  asChild
-                  isActive={pathname === item.href}
-                  tooltip={item.label}
-                >
-                  <a>
-                    <item.icon />
-                    <span>{item.label}</span>
-                  </a>
-                </SidebarMenuButton>
-              </Link>
+              <SidebarMenuButton
+                asChild
+                isActive={pathname === item.href}
+                tooltip={item.label}
+              >
+                <Link href={item.href}>
+                  <item.icon />
+                  <span>{item.label}</span>
+                </Link>
+              </SidebarMenuButton>
             </SidebarMenuItem>
           ))}
         </SidebarMenu>

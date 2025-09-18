@@ -1,10 +1,28 @@
+"use client";
+
 import { Car, Clock } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import ActiveParking from '@/components/dashboard/active-parking';
 import { initialParkingRecords } from '@/lib/data';
+import { useAuth } from '@/contexts/auth-context';
+import { useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 
 export default function DashboardPage() {
     const totalParked = initialParkingRecords.length;
+    const { user, loading } = useAuth();
+    const router = useRouter();
+
+    useEffect(() => {
+        if (!loading && !user) {
+            router.push('/');
+        }
+    }, [user, loading, router]);
+
+    if (loading || !user) {
+        return <div className="text-center">Loading...</div>;
+    }
+
 
   return (
     <div className="space-y-6">

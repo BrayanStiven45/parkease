@@ -1,4 +1,4 @@
-import type { ParkingRecord, LoyaltyAccount, Tariff } from './types';
+import type { ParkingRecord, LoyaltyAccount, Tariff, Branch } from './types';
 
 export const activeTariff: Tariff = {
   id: 1,
@@ -27,3 +27,9 @@ export const loyaltyAccounts: LoyaltyAccount[] = [
 export const getLoyaltyPoints = (plate: string): number => {
   return loyaltyAccounts.find(acc => acc.plate === plate)?.points ?? 0;
 };
+
+export const branches: Branch[] = [
+    { id: 'branch-1', name: 'Downtown Central', location: '123 Main St, Metropolis', totalSpots: 250, occupiedSpots: 180, revenue: 1250.75 },
+    { id: 'branch-2', name: 'Airport Lot B', location: '456 Airport Rd, Skyville', totalSpots: 500, occupiedSpots: 450, revenue: 3800.50 },
+    { id: 'branch-3', name: 'Uptown Plaza', location: '789 Oak Ave, Greenville', totalSpots: 150, occupiedSpots: 95, revenue: 850.00 },
+];
