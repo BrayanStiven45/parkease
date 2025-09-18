@@ -1,7 +1,6 @@
 // Import the functions you need from the SDKs you need
 import { initializeApp, getApps, getApp } from "firebase/app";
 import { getAuth, connectAuthEmulator } from "firebase/auth";
-import { getAnalytics, isSupported } from "firebase/analytics";
 import { createUserWithEmailAndPassword } from "firebase/auth";
 
 const firebaseConfig = {
@@ -17,16 +16,6 @@ const firebaseConfig = {
 // Initialize Firebase
 const app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
 const auth = getAuth(app);
-
-// Initialize Analytics if supported
-let analytics;
-if (typeof window !== 'undefined') {
-    isSupported().then((supported) => {
-        if (supported) {
-            analytics = getAnalytics(app);
-        }
-    });
-}
 
 // Create mock users in development
 if (process.env.NODE_ENV === 'development' && typeof window !== 'undefined') {
@@ -47,4 +36,4 @@ if (process.env.NODE_ENV === 'development' && typeof window !== 'undefined') {
   createMockUser('user@parkease.com');
 }
 
-export { app, auth, analytics };
+export { app, auth };
