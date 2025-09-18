@@ -19,7 +19,7 @@ const auth = getAuth(app);
 
 // Create mock users in development
 if (process.env.NODE_ENV === 'development' && typeof window !== 'undefined') {
-  connectAuthEmulator(auth, "http://127.0.0.1:9099");
+  connectAuthEmulator(auth, "http://localhost:9099");
   
   const createMockUser = async (email: string) => {
     try {
