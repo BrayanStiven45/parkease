@@ -12,20 +12,32 @@ import {
 import { Button } from '@/components/ui/button';
 import type { ParkingRecord } from '@/lib/types';
 import { format } from 'date-fns';
+import { Skeleton } from '../ui/skeleton';
 
 interface ParkingHistoryTableProps {
   records: ParkingRecord[];
+  isLoading: boolean;
 }
 
 const ITEMS_PER_PAGE = 10;
 
-export default function ParkingHistoryTable({ records }: ParkingHistoryTableProps) {
+export default function ParkingHistoryTable({ records, isLoading }: ParkingHistoryTableProps) {
     const [currentPage, setCurrentPage] = useState(1);
     const maxPage = Math.ceil(records.length / ITEMS_PER_PAGE);
     const paginatedRecords = records.slice(
         (currentPage - 1) * ITEMS_PER_PAGE,
         currentPage * ITEMS_PER_PAGE
     );
+
+    if (isLoading) {
+        return (
+             <div className="space-y-2">
+                <Skeleton className="h-10 w-full" />
+                <Skeleton className="h-10 w-full" />
+                <Skeleton className="h-10 w-full" />
+            </div>
+        )
+    }
 
   return (
     <>
@@ -62,18 +74,18 @@ export default function ParkingHistoryTable({ records }: ParkingHistoryTableProp
             variant="outline"
             size="sm"
             onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
-            disabled={currentPage === 1}
+            disabled={currentPage === 1 || records.length === 0}
             >
             Previous
             </Button>
             <span className="text-sm">
-                Page {currentPage} of {maxPage}
+                Page {currentPage} of {maxPage > 0 ? maxPage : 1}
             </span>
             <Button
             variant="outline"
             size="sm"
             onClick={() => setCurrentPage(p => Math.min(maxPage, p + 1))}
-            disabled={currentPage === maxPage}
+            disabled={currentPage === maxPage || records.length === 0}
             >
             Next
             </Button>
