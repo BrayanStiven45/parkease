@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useEffect, useMemo } from 'react';
@@ -47,6 +48,7 @@ export default function PaymentModal({ record, onClose, onPaymentSuccess, userId
 
   const costDetails = useMemo(() => {
     const secondsParked = differenceInSeconds(new Date(), new Date(record.entryTime));
+    const minutesParked = secondsParked / 60;
     const hoursParked = secondsParked / 3600;
     const initialCost = hoursParked * activeTariff.pricePerHour;
 
@@ -58,7 +60,7 @@ export default function PaymentModal({ record, onClose, onPaymentSuccess, userId
       initialCost: initialCost.toFixed(2),
       pointsDiscount: pointsDiscount.toFixed(2),
       finalAmount: parseFloat(finalAmount.toFixed(2)),
-      pointsEarned: Math.floor(hoursParked * 10),
+      pointsEarned: Math.floor(minutesParked), // 1 point per minute
     };
   }, [record.entryTime, pointsToRedeem]);
 
