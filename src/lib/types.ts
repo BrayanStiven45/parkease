@@ -1,5 +1,5 @@
 export type ParkingRecord = {
-  id: number;
+  id: string; // Changed to string to match Firestore document IDs
   plate: string;
   entryTime: string;
   exitTime?: string;

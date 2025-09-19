@@ -22,7 +22,7 @@ import { differenceInSeconds } from 'date-fns';
 interface PaymentModalProps {
   record: ParkingRecord;
   onClose: () => void;
-  onPaymentSuccess: (recordId: number) => void;
+  onPaymentSuccess: (recordId: string) => void;
 }
 
 export default function PaymentModal({ record, onClose, onPaymentSuccess }: PaymentModalProps) {
