@@ -50,7 +50,7 @@ export default function BranchesPage() {
                             </div>
                              <div className="flex items-center justify-between p-4 bg-muted/50 rounded-lg">
                                 <div>
-                                    <p className="text-sm text-muted-foreground">Today&apos;s Revenue</p>
+                                    <p className="text-sm text-muted-foreground">Today's Revenue</p>
                                     <p className="text-2xl font-bold">${branch.revenue.toFixed(2)}</p>
                                 </div>
                                 <DollarSign className="h-8 w-8 text-green-500" />
