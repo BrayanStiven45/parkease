@@ -9,12 +9,14 @@ import { useRouter } from 'next/navigation';
 import { collection, query, where, onSnapshot } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { differenceInMinutes } from 'date-fns';
+import type { Timestamp } from 'firebase/firestore';
 
 export default function DashboardPage() {
     const { user, loading } = useAuth();
     const router = useRouter();
     const [totalParked, setTotalParked] = useState(0);
     const [avgTime, setAvgTime] = useState("0h 0m");
+    const [entryTimes, setEntryTimes] = useState<Date[]>([]);
 
     useEffect(() => {
         if (!loading && !user) {
@@ -32,26 +34,42 @@ export default function DashboardPage() {
             const count = snapshot.size;
             setTotalParked(count);
 
-            if (count > 0) {
+            const times = snapshot.docs
+                .map(doc => {
+                    const entryTime = (doc.data().entryTime as Timestamp)?.toDate();
+                    return entryTime instanceof Date && !isNaN(entryTime.getTime()) ? entryTime : null;
+                })
+                .filter((time): time is Date => time !== null);
+            
+            setEntryTimes(times);
+        });
+
+        return () => unsubscribe();
+    }, [user]);
+
+    useEffect(() => {
+        const calculateAvgTime = () => {
+            if (entryTimes.length > 0) {
                 const now = new Date();
-                const totalMinutes = snapshot.docs.reduce((acc, doc) => {
-                    const entryTime = doc.data().entryTime?.toDate();
-                    if (entryTime) {
-                        return acc + differenceInMinutes(now, entryTime);
-                    }
-                    return acc;
+                const totalMinutes = entryTimes.reduce((acc, entryTime) => {
+                    return acc + differenceInMinutes(now, entryTime);
                 }, 0);
-                const avgMinutes = totalMinutes / count;
+
+                const avgMinutes = totalMinutes / entryTimes.length;
                 const hours = Math.floor(avgMinutes / 60);
                 const minutes = Math.round(avgMinutes % 60);
                 setAvgTime(`${hours}h ${minutes}m`);
             } else {
                 setAvgTime("0h 0m");
             }
-        });
+        };
 
-        return () => unsubscribe();
-    }, [user]);
+        calculateAvgTime(); // Calculate once initially
+
+        const intervalId = setInterval(calculateAvgTime, 1000); // Recalculate every second
+
+        return () => clearInterval(intervalId);
+    }, [entryTimes]);
 
     if (loading || !user) {
         return <div className="text-center">Loading...</div>;
