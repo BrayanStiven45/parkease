@@ -19,25 +19,34 @@ const auth = getAuth(app);
 
 // Create mock users in development
 if (process.env.NODE_ENV === 'development' && typeof window !== 'undefined') {
-  try {
-    connectAuthEmulator(auth, "http://localhost:9099", { disableWarnings: true });
-    
-    const createMockUser = async (email: string) => {
-      try {
-        await createUserWithEmailAndPassword(auth, email, "password");
-        console.log(`Mock user ${email} created.`);
-      } catch (error: any) {
-        if (error.code !== 'auth/email-already-in-use') {
-          console.error(`Error creating mock user ${email}:`, error);
+  // Use a flag to ensure this only runs once
+  if (!(window as any).__firebaseMockUsersCreated) {
+    try {
+      connectAuthEmulator(auth, "http://localhost:9099", { disableWarnings: true });
+      
+      const createMockUser = async (email: string) => {
+        try {
+          await createUserWithEmailAndPassword(auth, email, "password");
+          console.log(`Mock user ${email} created.`);
+        } catch (error: any) {
+          if (error.code !== 'auth/email-already-in-use') {
+            console.error(`Error creating mock user ${email}:`, error);
+          }
         }
-      }
-    };
-    
-    // createMockUser('admin@parkease.com');
-    // createMockUser('user@parkease.com');
-  } catch(e) {
-    console.error('Failed to connect to auth emulator', e);
+      };
+      
+      // IIFE to run user creation
+      (async () => {
+        await createMockUser('admin@parkease.com');
+        await createMockUser('user@parkease.com');
+      })();
+
+      (window as any).__firebaseMockUsersCreated = true;
+    } catch(e) {
+      console.error('Failed to connect to auth emulator or create mock users', e);
+    }
   }
 }
+
 
 export { app, auth };
