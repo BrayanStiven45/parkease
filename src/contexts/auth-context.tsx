@@ -1,12 +1,11 @@
 'use client';
 
-import { createContext, useContext, ReactNode } from 'react';
+import { createContext, useContext, ReactNode, useEffect, useState } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 import { useAuthState } from 'react-firebase-hooks/auth';
 import type { User } from 'firebase/auth';
-import { signOut } from 'firebase/auth';
+import { signOut, createUserWithEmailAndPassword } from 'firebase/auth';
 import { auth } from '@/lib/firebase';
-import { useEffect } from 'react';
 
 interface AuthContextType {
     user: User | null | undefined;
@@ -18,10 +17,47 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
+// --- Create Mock Users for Demo ---
+let mockUsersCreated = false;
+const createMockUsers = async () => {
+    if (mockUsersCreated) return;
+    mockUsersCreated = true;
+
+    const users = [
+      { email: 'admin@parkease.com' },
+      { email: 'user@parkease.com' },
+    ];
+
+    for (const user of users) {
+        try {
+            await createUserWithEmailAndPassword(auth, user.email, "password");
+            console.log(`Mock user ${user.email} created successfully.`);
+        } catch (error: any) {
+            if (error.code === 'auth/email-already-in-use') {
+                console.log(`Mock user ${user.email} already exists.`);
+            } else {
+                console.error(`Error creating mock user ${user.email}:`, error);
+            }
+        }
+    }
+};
+
+
 export function AuthProvider({ children }: { children: ReactNode }) {
     const [user, loading, error] = useAuthState(auth);
     const router = useRouter();
     const pathname = usePathname();
+    const [initialized, setInitialized] = useState(false);
+
+    useEffect(() => {
+        const initialize = async () => {
+            if (process.env.NODE_ENV === 'development' && !initialized) {
+                await createMockUsers();
+                setInitialized(true);
+            }
+        };
+        initialize();
+    }, [initialized]);
 
     const isAdmin = user?.email === 'admin@parkease.com';
 
@@ -41,7 +77,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     
     const value = { user, loading, error, isAdmin, logout };
 
-    if (loading && pathname !== '/') {
+    if ((loading || !initialized) && pathname !== '/') {
         return (
             <div className="flex h-screen items-center justify-center">
                 <p>Loading...</p>
