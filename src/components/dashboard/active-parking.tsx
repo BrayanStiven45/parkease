@@ -7,7 +7,8 @@ import { db } from '@/lib/firebase';
 import { useAuth } from '@/contexts/auth-context';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { PlusCircle } from 'lucide-react';
+import { Input } from '@/components/ui/input';
+import { PlusCircle, Search } from 'lucide-react';
 import ActiveParkingTable from './active-parking-table';
 import VehicleEntryModal from './vehicle-entry-modal';
 import PaymentModal from './payment-modal';
@@ -17,6 +18,8 @@ export default function ActiveParking() {
   const { user } = useAuth();
   const { toast } = useToast();
   const [records, setRecords] = useState<ParkingRecord[]>([]);
+  const [filteredRecords, setFilteredRecords] = useState<ParkingRecord[]>([]);
+  const [searchQuery, setSearchQuery] = useState('');
   const [isLoading, setIsLoading] = useState(true);
   const [isEntryModalOpen, setEntryModalOpen] = useState(false);
   const [selectedRecord, setSelectedRecord] = useState<ParkingRecord | null>(null);
@@ -56,6 +59,14 @@ export default function ActiveParking() {
     // Cleanup subscription on component unmount
     return () => unsubscribe();
   }, [user, toast]);
+
+  useEffect(() => {
+    const lowercasedQuery = searchQuery.toLowerCase();
+    const filtered = records.filter(record => 
+      record.plate.toLowerCase().includes(lowercasedQuery)
+    );
+    setFilteredRecords(filtered);
+  }, [searchQuery, records]);
 
   const handleOpenPaymentModal = (record: ParkingRecord) => {
     setSelectedRecord(record);
@@ -105,15 +116,34 @@ export default function ActiveParking() {
   return (
     <>
       <Card>
-        <CardHeader className="flex flex-row items-center justify-between">
-          <CardTitle>Active Parking</CardTitle>
-          <Button size="sm" onClick={() => setEntryModalOpen(true)}>
-            <PlusCircle className="mr-2 h-4 w-4" />
-            Record Entry
-          </Button>
+        <CardHeader>
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+            <CardTitle>Active Parking</CardTitle>
+            <div className="flex w-full sm:w-auto flex-col sm:flex-row sm:items-center gap-2">
+                <div className="relative w-full sm:w-auto">
+                    <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+                    <Input
+                        type="search"
+                        placeholder="Search by plate..."
+                        className="pl-8 sm:w-[200px] lg:w-[250px]"
+                        value={searchQuery}
+                        onChange={(e) => setSearchQuery(e.target.value)}
+                    />
+                </div>
+                <Button size="sm" onClick={() => setEntryModalOpen(true)} className="w-full sm:w-auto">
+                    <PlusCircle className="mr-2 h-4 w-4" />
+                    Record Entry
+                </Button>
+            </div>
+          </div>
         </CardHeader>
         <CardContent>
-          <ActiveParkingTable records={records} onProcessPayment={handleOpenPaymentModal} isLoading={isLoading} />
+          <ActiveParkingTable 
+            records={filteredRecords} 
+            onProcessPayment={handleOpenPaymentModal} 
+            isLoading={isLoading}
+            hasSearchQuery={searchQuery.length > 0}
+            />
         </CardContent>
       </Card>
 

@@ -18,6 +18,7 @@ interface ActiveParkingTableProps {
   records: ParkingRecord[];
   onProcessPayment: (record: ParkingRecord) => void;
   isLoading: boolean;
+  hasSearchQuery: boolean;
 }
 
 const formatElapsedTime = (start: Date, end: Date) => {
@@ -28,7 +29,7 @@ const formatElapsedTime = (start: Date, end: Date) => {
     return `${duration.hours || 0}h ${duration.minutes || 0}m ${duration.seconds || 0}s`;
 }
 
-export default function ActiveParkingTable({ records, onProcessPayment, isLoading }: ActiveParkingTableProps) {
+export default function ActiveParkingTable({ records, onProcessPayment, isLoading, hasSearchQuery }: ActiveParkingTableProps) {
     const [now, setNow] = useState(new Date());
 
     useEffect(() => {
@@ -44,6 +45,13 @@ export default function ActiveParkingTable({ records, onProcessPayment, isLoadin
                 <Skeleton className="h-10 w-full" />
             </div>
         )
+    }
+
+    const getEmptyStateMessage = () => {
+        if (hasSearchQuery) {
+            return "No vehicles found with that plate.";
+        }
+        return "No vehicles currently parked.";
     }
 
   return (
@@ -73,7 +81,7 @@ export default function ActiveParkingTable({ records, onProcessPayment, isLoadin
         ) : (
           <TableRow>
             <TableCell colSpan={4} className="text-center">
-              No vehicles currently parked.
+              {getEmptyStateMessage()}
             </TableCell>
           </TableRow>
         )}
