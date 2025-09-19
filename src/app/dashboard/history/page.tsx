@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { collection, query, where, onSnapshot, orderBy } from 'firebase/firestore';
+import { collection, query, where, onSnapshot } from 'firebase/firestore';
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import ParkingHistoryTable from "@/components/history/parking-history-table";
@@ -28,10 +28,11 @@ export default function HistoryPage() {
 
         setIsLoadingData(true);
         const parkingRecordsCollection = collection(db, 'users', user.uid, 'parkingRecords');
+        // Se elimina orderBy para evitar el requerimiento de un índice compuesto.
+        // La ordenación se hará en el cliente.
         const q = query(
             parkingRecordsCollection, 
-            where('status', '==', 'completed'),
-            orderBy('exitTime', 'desc')
+            where('status', '==', 'completed')
         );
 
         const unsubscribe = onSnapshot(q, (snapshot) => {
@@ -41,6 +42,12 @@ export default function HistoryPage() {
                 entryTime: (doc.data().entryTime as Timestamp)?.toDate().toISOString(),
                 exitTime: (doc.data().exitTime as Timestamp)?.toDate().toISOString(),
             })) as ParkingRecord[];
+
+            // Ordenar los registros por fecha de salida descendente en el cliente.
+            fetchedRecords.sort((a, b) => 
+                new Date(b.exitTime ?? 0).getTime() - new Date(a.exitTime ?? 0).getTime()
+            );
+
             setHistoryRecords(fetchedRecords);
             setIsLoadingData(false);
         }, (error) => {
