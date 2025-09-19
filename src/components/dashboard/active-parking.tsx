@@ -20,7 +20,7 @@ interface ActiveParkingProps {
 }
 
 export default function ActiveParking({ branchId, readOnly = false }: ActiveParkingProps) {
-  const { user } = useAuth();
+  const { user, userData } = useAuth();
   const { toast } = useToast();
   const [records, setRecords] = useState<ParkingRecord[]>([]);
   const [filteredRecords, setFilteredRecords] = useState<ParkingRecord[]>([]);
@@ -28,8 +28,11 @@ export default function ActiveParking({ branchId, readOnly = false }: ActivePark
   const [isLoading, setIsLoading] = useState(true);
   const [isEntryModalOpen, setEntryModalOpen] = useState(false);
   const [selectedRecord, setSelectedRecord] = useState<ParkingRecord | null>(null);
+  const [paymentInitiatedAt, setPaymentInitiatedAt] = useState<Date | null>(null);
+
 
   const targetUserId = branchId || user?.uid;
+  const hourlyCost = userData?.hourlyCost ?? 0;
 
   useEffect(() => {
     if (!targetUserId) return;
@@ -75,11 +78,13 @@ export default function ActiveParking({ branchId, readOnly = false }: ActivePark
 
   const handleOpenPaymentModal = (record: ParkingRecord) => {
     if (readOnly) return;
+    setPaymentInitiatedAt(new Date()); // Freeze time
     setSelectedRecord(record);
   };
 
   const handleClosePaymentModal = () => {
     setSelectedRecord(null);
+    setPaymentInitiatedAt(null);
   };
 
   const handleAddRecord = async (plate: string) => {
@@ -168,6 +173,8 @@ export default function ActiveParking({ branchId, readOnly = false }: ActivePark
             isLoading={isLoading}
             hasSearchQuery={searchQuery.length > 0}
             readOnly={readOnly}
+            paymentInitiatedAt={paymentInitiatedAt}
+            selectedRecordId={selectedRecord?.id || null}
             />
         </CardContent>
       </Card>
@@ -186,6 +193,8 @@ export default function ActiveParking({ branchId, readOnly = false }: ActivePark
               onClose={handleClosePaymentModal}
               onPaymentSuccess={handlePaymentSuccess}
               userId={targetUserId}
+              hourlyCost={hourlyCost}
+              paymentInitiatedAt={paymentInitiatedAt!}
             />
           )}
         </>

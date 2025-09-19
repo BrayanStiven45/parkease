@@ -20,6 +20,8 @@ interface ActiveParkingTableProps {
   isLoading: boolean;
   hasSearchQuery: boolean;
   readOnly?: boolean;
+  paymentInitiatedAt: Date | null;
+  selectedRecordId: string | null;
 }
 
 const formatElapsedTime = (start: Date, end: Date) => {
@@ -30,7 +32,15 @@ const formatElapsedTime = (start: Date, end: Date) => {
     return `${duration.hours || 0}h ${duration.minutes || 0}m ${duration.seconds || 0}s`;
 }
 
-export default function ActiveParkingTable({ records, onProcessPayment, isLoading, hasSearchQuery, readOnly = false }: ActiveParkingTableProps) {
+export default function ActiveParkingTable({ 
+  records, 
+  onProcessPayment, 
+  isLoading, 
+  hasSearchQuery, 
+  readOnly = false,
+  paymentInitiatedAt,
+  selectedRecordId 
+}: ActiveParkingTableProps) {
     const [now, setNow] = useState(new Date());
 
     useEffect(() => {
@@ -67,20 +77,25 @@ export default function ActiveParkingTable({ records, onProcessPayment, isLoadin
       </TableHeader>
       <TableBody>
         {records.length > 0 ? (
-          records.map((record) => (
-            <TableRow key={record.id}>
-              <TableCell className="font-medium font-code">{record.plate}</TableCell>
-              <TableCell>{record.entryTime ? format(new Date(record.entryTime), 'Pp') : '...'}</TableCell>
-              <TableCell>{record.entryTime ? formatElapsedTime(new Date(record.entryTime), now) : '...'}</TableCell>
-              {!readOnly && (
-                <TableCell className="text-right">
-                    <Button variant="outline" size="sm" onClick={() => onProcessPayment(record)}>
-                    Process Payment
-                    </Button>
-                </TableCell>
-              )}
-            </TableRow>
-          ))
+          records.map((record) => {
+            const isSelectedForPayment = record.id === selectedRecordId && paymentInitiatedAt;
+            const endTime = isSelectedForPayment ? paymentInitiatedAt : now;
+
+            return (
+              <TableRow key={record.id}>
+                <TableCell className="font-medium font-code">{record.plate}</TableCell>
+                <TableCell>{record.entryTime ? format(new Date(record.entryTime), 'Pp') : '...'}</TableCell>
+                <TableCell>{record.entryTime ? formatElapsedTime(new Date(record.entryTime), endTime) : '...'}</TableCell>
+                {!readOnly && (
+                  <TableCell className="text-right">
+                      <Button variant="outline" size="sm" onClick={() => onProcessPayment(record)}>
+                      Process Payment
+                      </Button>
+                  </TableCell>
+                )}
+              </TableRow>
+            )
+          })
         ) : (
           <TableRow>
             <TableCell colSpan={readOnly ? 3 : 4} className="text-center">

@@ -17,7 +17,6 @@ import { Label } from '@/components/ui/label';
 import { Card, CardContent } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
 import type { ParkingRecord } from '@/lib/types';
-import { activeTariff } from '@/lib/data';
 import { useToast } from '@/hooks/use-toast';
 import { differenceInSeconds } from 'date-fns';
 import { db } from '@/lib/firebase';
@@ -27,9 +26,18 @@ interface PaymentModalProps {
   onClose: () => void;
   onPaymentSuccess: () => void;
   userId?: string; // The ID of the user whose record is being processed
+  hourlyCost: number;
+  paymentInitiatedAt: Date;
 }
 
-export default function PaymentModal({ record, onClose, onPaymentSuccess, userId }: PaymentModalProps) {
+export default function PaymentModal({ 
+  record, 
+  onClose, 
+  onPaymentSuccess, 
+  userId, 
+  hourlyCost,
+  paymentInitiatedAt
+}: PaymentModalProps) {
   const { toast } = useToast();
   const [pointsToRedeem, setPointsToRedeem] = useState(0);
   const [availablePoints, setAvailablePoints] = useState(0);
@@ -47,10 +55,10 @@ export default function PaymentModal({ record, onClose, onPaymentSuccess, userId
   }, [record.plate]);
 
   const costDetails = useMemo(() => {
-    const secondsParked = differenceInSeconds(new Date(), new Date(record.entryTime));
+    const secondsParked = differenceInSeconds(paymentInitiatedAt, new Date(record.entryTime));
     const minutesParked = secondsParked / 60;
     const hoursParked = secondsParked / 3600;
-    const initialCost = hoursParked * activeTariff.pricePerHour;
+    const initialCost = hoursParked * hourlyCost;
 
     const pointsDiscount = pointsToRedeem * 0.01; // Assuming 1 point = $0.01
     const finalAmount = Math.max(0, initialCost - pointsDiscount);
@@ -62,7 +70,7 @@ export default function PaymentModal({ record, onClose, onPaymentSuccess, userId
       finalAmount: parseFloat(finalAmount.toFixed(2)),
       pointsEarned: Math.floor(minutesParked), // 1 point per minute
     };
-  }, [record.entryTime, pointsToRedeem]);
+  }, [record.entryTime, pointsToRedeem, hourlyCost, paymentInitiatedAt]);
 
   const handleRedeemPointsChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = parseInt(e.target.value, 10);
