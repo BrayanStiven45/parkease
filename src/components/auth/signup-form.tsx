@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState } from 'react';
@@ -15,6 +16,7 @@ import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
 import { Car, Eye, EyeOff, Copy } from 'lucide-react';
 import { AlertDialog, AlertDialogAction, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
+import { useAuth } from '@/contexts/auth-context';
 
 const formSchema = z.object({
     username: z.string().min(2, { message: 'Username must be at least 2 characters.' }),
@@ -33,6 +35,7 @@ const formSchema = z.object({
 export default function SignUpForm() {
     const router = useRouter();
     const { toast } = useToast();
+    const { forceReloadUserData } = useAuth();
     const [isLoading, setIsLoading] = useState(false);
     const [showPassword, setShowPassword] = useState(false);
     const [showSuccessDialog, setShowSuccessDialog] = useState(false);
@@ -63,6 +66,13 @@ export default function SignUpForm() {
             description: "Your login email has been copied to the clipboard.",
         });
     };
+
+    const handleContinueToDashboard = async () => {
+        // Force the auth context to reload the user data
+        // before navigating away.
+        await forceReloadUserData();
+        router.push('/dashboard');
+    }
 
     async function onSubmit(values: z.infer<typeof formSchema>) {
         setIsLoading(true);
@@ -180,7 +190,7 @@ export default function SignUpForm() {
                         </Button>
                     </div>
                     <AlertDialogFooter>
-                        <AlertDialogAction onClick={() => router.push('/dashboard')}>Continue to Dashboard</AlertDialogAction>
+                        <AlertDialogAction onClick={handleContinueToDashboard}>Continue to Dashboard</AlertDialogAction>
                     </AlertDialogFooter>
                 </AlertDialogContent>
             </AlertDialog>
