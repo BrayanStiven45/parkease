@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useMemo } from 'react';
-import { doc, updateDoc, serverTimestamp } from 'firebase/firestore';
+import { doc, updateDoc, serverTimestamp, getDoc, increment } from 'firebase/firestore';
 import {
   Dialog,
   DialogContent,
@@ -16,7 +16,7 @@ import { Label } from '@/components/ui/label';
 import { Card, CardContent } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
 import type { ParkingRecord } from '@/lib/types';
-import { activeTariff, getLoyaltyPoints } from '@/lib/data';
+import { activeTariff } from '@/lib/data';
 import { useToast } from '@/hooks/use-toast';
 import { differenceInSeconds } from 'date-fns';
 import { db } from '@/lib/firebase';
@@ -35,7 +35,14 @@ export default function PaymentModal({ record, onClose, onPaymentSuccess, userId
   const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
-    setAvailablePoints(getLoyaltyPoints(record.plate));
+    const fetchPoints = async () => {
+      const plateRef = doc(db, 'plates', record.plate);
+      const plateSnap = await getDoc(plateRef);
+      if (plateSnap.exists()) {
+        setAvailablePoints(plateSnap.data().puntos || 0);
+      }
+    };
+    fetchPoints();
   }, [record.plate]);
 
   const costDetails = useMemo(() => {
@@ -51,6 +58,7 @@ export default function PaymentModal({ record, onClose, onPaymentSuccess, userId
       initialCost: initialCost.toFixed(2),
       pointsDiscount: pointsDiscount.toFixed(2),
       finalAmount: parseFloat(finalAmount.toFixed(2)),
+      pointsEarned: Math.floor(hoursParked * 10),
     };
   }, [record.entryTime, pointsToRedeem]);
 
@@ -77,16 +85,25 @@ export default function PaymentModal({ record, onClose, onPaymentSuccess, userId
 
     try {
         const recordRef = doc(db, 'users', userId, 'parkingRecords', record.id);
+        const plateRef = doc(db, 'plates', record.plate);
+
+        // Update parking record
         await updateDoc(recordRef, {
             status: 'completed',
             exitTime: serverTimestamp(),
-            totalCost: costDetails.finalAmount
+            totalCost: costDetails.finalAmount,
+        });
+
+        // Update loyalty points
+        const pointsChange = costDetails.pointsEarned - pointsToRedeem;
+        await updateDoc(plateRef, {
+            puntos: increment(pointsChange)
         });
 
         onPaymentSuccess();
         toast({
             title: "Payment Successful",
-            description: `Payment for ${record.plate} processed. Total: $${costDetails.finalAmount.toFixed(2)}`,
+            description: `Payment for ${record.plate} processed. Total: $${costDetails.finalAmount.toFixed(2)}. Points earned: ${costDetails.pointsEarned}.`,
         });
 
     } catch (error) {
@@ -94,7 +111,7 @@ export default function PaymentModal({ record, onClose, onPaymentSuccess, userId
         toast({
             variant: "destructive",
             title: "Payment Failed",
-            description: "Could not update the parking record.",
+            description: "Could not update the parking record or loyalty points.",
         });
     } finally {
         setIsLoading(false);
@@ -116,6 +133,7 @@ export default function PaymentModal({ record, onClose, onPaymentSuccess, userId
             <CardContent className="pt-6 space-y-2">
               <div className="flex justify-between"><span>Parking Duration:</span> <span>{costDetails.hoursParked} hours</span></div>
               <div className="flex justify-between"><span>Calculated Cost:</span> <span className="font-semibold">${costDetails.initialCost}</span></div>
+               <div className="flex justify-between text-sm text-muted-foreground"><span>Points to be Earned:</span> <span>{costDetails.pointsEarned}</span></div>
             </CardContent>
           </Card>
           

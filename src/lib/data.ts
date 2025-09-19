@@ -14,14 +14,12 @@ export const completedParkingRecords: ParkingRecord[] = [
     { id: '102', plate: 'OLD-002', entryTime: '2023-10-26T11:00:00Z', exitTime: '2023-10-26T11:45:00Z', status: 'completed', totalCost: 1.88 },
 ];
 
-export const loyaltyAccounts: LoyaltyAccount[] = [
-  { plate: 'ABC-123', points: 150 },
-  { plate: 'XYZ-789', points: 25 },
-  { plate: 'GHI-101', points: 500 },
-];
+export const loyaltyAccounts: LoyaltyAccount[] = [];
 
 export const getLoyaltyPoints = (plate: string): number => {
-  return loyaltyAccounts.find(acc => acc.plate === plate)?.points ?? 0;
+  // This function is now a placeholder as loyalty points are managed in Firestore.
+  // The logic in PaymentModal now directly fetches points from Firestore.
+  return 0;
 };
 
 export const branches: Branch[] = [

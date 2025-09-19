@@ -82,6 +82,7 @@ export default function SignUpForm() {
 
         try {
             const userCredential = await createUserWithEmailAndPassword(auth, email, values.password);
+            
             const user = userCredential.user;
 
             await setDoc(doc(db, "users", user.uid), {

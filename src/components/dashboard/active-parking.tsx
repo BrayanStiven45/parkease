@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { collection, addDoc, serverTimestamp, query, where, onSnapshot, orderBy } from 'firebase/firestore';
+import { collection, addDoc, serverTimestamp, query, where, onSnapshot, getDocs, doc, setDoc } from 'firebase/firestore';
 import type { ParkingRecord } from '@/lib/types';
 import { db } from '@/lib/firebase';
 import { useAuth } from '@/contexts/auth-context';
@@ -95,6 +95,22 @@ export default function ActiveParking({ branchId, readOnly = false }: ActivePark
     }
 
     try {
+      // Check if plate exists and create it if it doesn't
+      const plateRef = doc(db, 'plates', plate);
+      const plateSnap = await getDocs(query(collection(db, 'plates'), where('plate', '==', plate)));
+
+      if (plateSnap.empty) {
+        await setDoc(plateRef, {
+          plate: plate,
+          puntos: 0,
+          createdAt: serverTimestamp(),
+        });
+        toast({
+          title: 'New Plate Registered',
+          description: `Plate ${plate} has been added to the loyalty system.`,
+        });
+      }
+
       const parkingRecordsCollection = collection(db, 'users', targetUserId, 'parkingRecords');
       await addDoc(parkingRecordsCollection, {
         plate,
