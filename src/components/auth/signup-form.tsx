@@ -6,7 +6,8 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { createUserWithEmailAndPassword } from 'firebase/auth';
-import { auth } from '@/lib/firebase';
+import { doc, setDoc } from 'firebase/firestore';
+import { auth, db } from '@/lib/firebase';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
@@ -35,7 +36,16 @@ export default function SignUpForm() {
     async function onSubmit(values: z.infer<typeof formSchema>) {
         setIsLoading(true);
         try {
-            await createUserWithEmailAndPassword(auth, values.email, values.password);
+            const userCredential = await createUserWithEmailAndPassword(auth, values.email, values.password);
+            const user = userCredential.user;
+
+            // Guardar información del usuario en Firestore
+            await setDoc(doc(db, "users", user.uid), {
+                email: user.email,
+                uid: user.uid,
+                createdAt: new Date(),
+            });
+
             router.push('/dashboard');
         } catch (error: any) {
             console.error(error);
@@ -70,6 +80,7 @@ export default function SignUpForm() {
                             render={({ field }) => (
                                 <FormItem>
                                     <FormLabel>Email</FormLabel>
+
                                     <FormControl>
                                         <Input type="email" placeholder="name@example.com" {...field} />
                                     </FormControl>

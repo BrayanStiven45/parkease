@@ -1,28 +1,28 @@
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { MapPin, User } from 'lucide-react';
+import { collection, getDocs } from 'firebase/firestore';
+import { User as LucideUser, MapPin, DollarSign, ParkingCircle } from 'lucide-react';
+
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { completedParkingRecords, loyaltyAccounts } from "@/lib/data";
 import { useAuth } from '@/contexts/auth-context';
+import { db } from '@/lib/firebase';
+import type { User } from 'firebase/auth';
 
-// Mapeamos los usuarios registrados como sucursales para la demo
-const registeredUsersAsBranches = loyaltyAccounts.map((account, index) => ({
-    id: `user-${index + 1}`,
-    email: `${account.plate.toLowerCase()}@example.com`, // Email simulado
-    location: "Ubicación Desconocida",
-    totalSpots: 100, // Dato de ejemplo
-    occupiedSpots: completedParkingRecords.filter(r => r.plate === account.plate).length, // Dato de ejemplo
-    revenue: completedParkingRecords
-        .filter(r => r.plate === account.plate)
-        .reduce((sum, r) => sum + (r.totalCost || 0), 0), // Dato de ejemplo
-}));
-
+// Extendemos el tipo User de Firebase para incluir cualquier dato adicional que almacenemos
+interface AppUser extends User {
+    location?: string;
+    totalSpots?: number;
+    occupiedSpots?: number;
+    revenue?: number;
+}
 
 export default function BranchesPage() {
     const { isAdmin, loading } = useAuth();
     const router = useRouter();
+    const [branches, setBranches] = useState<AppUser[]>([]);
+    const [isLoadingBranches, setIsLoadingBranches] = useState(true);
 
     useEffect(() => {
         if (!loading && !isAdmin) {
@@ -30,24 +30,54 @@ export default function BranchesPage() {
         }
     }, [isAdmin, loading, router]);
 
+    useEffect(() => {
+        if (isAdmin) {
+            const fetchBranches = async () => {
+                setIsLoadingBranches(true);
+                try {
+                    const usersCollection = collection(db, 'users');
+                    const usersSnapshot = await getDocs(usersCollection);
+                    const usersList = usersSnapshot.docs.map(doc => ({
+                        ...doc.data(),
+                        uid: doc.id,
+                        // Datos de ejemplo para la demo, en una app real vendrían de Firestore
+                        location: "Ubicación Desconocida",
+                        revenue: Math.random() * 2000,
+                        occupiedSpots: Math.floor(Math.random() * 100),
+                        totalSpots: 100,
+                    })) as AppUser[];
+                    setBranches(usersList);
+                } catch (error) {
+                    console.error("Error fetching branches:", error);
+                } finally {
+                    setIsLoadingBranches(false);
+                }
+            };
+            fetchBranches();
+        }
+    }, [isAdmin]);
 
-    if (loading) {
+    if (loading || isLoadingBranches) {
         return <div className="text-center">Loading...</div>;
     }
-    
+
     if (!isAdmin) {
         return null; // O un mensaje de "Acceso denegado"
     }
 
+    const handleBranchClick = (branchId: string) => {
+        router.push(`/dashboard/branches/${branchId}`);
+    };
+
     return (
         <div className="space-y-6">
-            <h1 className="text-3xl font-bold">Gestión de Sucursales (Usuarios Registrados)</h1>
+            <h1 className="text-3xl font-bold">Gestión de Sucursales</h1>
             <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-                {registeredUsersAsBranches.map(branch => (
-                    <Card key={branch.id}>
+                {branches.map(branch => (
+                    <Card key={branch.uid} className="cursor-pointer hover:shadow-lg transition-shadow" onClick={() => handleBranchClick(branch.uid)}>
                         <CardHeader>
                             <CardTitle className="flex items-center gap-2">
-                                <User className="h-5 w-5" />
+                                <LucideUser className="h-5 w-5" />
                                 {branch.email}
                             </CardTitle>
                              <p className="text-sm text-muted-foreground flex items-center gap-2 pt-1">
@@ -55,10 +85,16 @@ export default function BranchesPage() {
                             </p>
                         </CardHeader>
                         <CardContent className="space-y-4">
-                           <div className="flex items-center justify-between p-4 bg-muted/50 rounded-lg">
+                           <div className="flex items-center justify-between p-3 bg-muted/50 rounded-lg">
                                 <div>
-                                    <p className="text-sm text-muted-foreground">Total de Ingresos Registrados</p>
-                                    <p className="text-2xl font-bold">${branch.revenue.toFixed(2)}</p>
+                                    <p className="text-sm text-muted-foreground flex items-center gap-1"><DollarSign className="h-4 w-4" /> Ingresos Totales</p>
+                                    <p className="text-xl font-bold">${branch.revenue?.toFixed(2) ?? '0.00'}</p>
+                                </div>
+                            </div>
+                             <div className="flex items-center justify-between p-3 bg-muted/50 rounded-lg">
+                                <div>
+                                    <p className="text-sm text-muted-foreground flex items-center gap-1"><ParkingCircle className="h-4 w-4" /> Ocupación</p>
+                                    <p className="text-xl font-bold">{branch.occupiedSpots} / {branch.totalSpots}</p>
                                 </div>
                             </div>
                         </CardContent>
