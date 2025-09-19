@@ -38,6 +38,7 @@ export default function SignUpForm() {
             await createUserWithEmailAndPassword(auth, values.email, values.password);
             router.push('/dashboard');
         } catch (error: any) {
+            console.error(error);
              toast({
                 variant: "destructive",
                 title: "Sign Up Failed",
