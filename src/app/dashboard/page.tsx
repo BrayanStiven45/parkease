@@ -12,7 +12,7 @@ import { differenceInMinutes } from 'date-fns';
 import type { Timestamp } from 'firebase/firestore';
 
 export default function DashboardPage() {
-    const { user, loading } = useAuth();
+    const { user, userData, loading } = useAuth();
     const router = useRouter();
     const [totalParked, setTotalParked] = useState(0);
     const [avgTime, setAvgTime] = useState("0h 0m");
@@ -77,6 +77,11 @@ export default function DashboardPage() {
 
   return (
     <div className="space-y-6">
+       {userData?.parkingLotName && (
+            <h1 className="text-2xl font-bold text-foreground">
+                {userData.parkingLotName}
+            </h1>
+        )}
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
