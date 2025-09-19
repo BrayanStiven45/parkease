@@ -41,15 +41,18 @@ export default function BranchesPage() {
                     const q = query(usersCollection, where("email", "!=", user.email));
                     const usersSnapshot = await getDocs(q);
 
-                    const usersList = usersSnapshot.docs.map(doc => ({
-                        ...doc.data(),
-                        uid: doc.id,
-                        // Datos de ejemplo para la demo, en una app real vendrían de Firestore
-                        location: "Ubicación Desconocida",
-                        revenue: Math.random() * 2000,
-                        occupiedSpots: Math.floor(Math.random() * 100),
-                        totalSpots: 100,
-                    })) as AppUser[];
+                    const usersList = usersSnapshot.docs.map(doc => {
+                        const data = doc.data();
+                        return {
+                            ...data,
+                            uid: doc.id,
+                            // Datos de ejemplo para la demo, en una app real vendrían de Firestore o se calcularían
+                            location: "Ubicación Desconocida",
+                            revenue: Math.random() * 2000,
+                            occupiedSpots: Math.floor(Math.random() * 100),
+                            totalSpots: 100,
+                        } as AppUser;
+                    });
                     setBranches(usersList);
                 } catch (error) {
                     console.error("Error fetching branches:", error);
@@ -77,33 +80,41 @@ export default function BranchesPage() {
         <div className="space-y-6">
             <h1 className="text-3xl font-bold">Gestión de Sucursales</h1>
             <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-                {branches.map(branch => (
-                    <Card key={branch.uid} className="cursor-pointer hover:shadow-lg transition-shadow" onClick={() => handleBranchClick(branch.uid)}>
-                        <CardHeader>
-                            <CardTitle className="flex items-center gap-2">
-                                <LucideUser className="h-5 w-5" />
-                                {branch.email}
-                            </CardTitle>
-                             <p className="text-sm text-muted-foreground flex items-center gap-2 pt-1">
-                                <MapPin className="h-4 w-4" /> {branch.location}
-                            </p>
-                        </CardHeader>
-                        <CardContent className="space-y-4">
-                           <div className="flex items-center justify-between p-3 bg-muted/50 rounded-lg">
-                                <div>
-                                    <p className="text-sm text-muted-foreground flex items-center gap-1"><DollarSign className="h-4 w-4" /> Ingresos Totales</p>
-                                    <p className="text-xl font-bold">${branch.revenue?.toFixed(2) ?? '0.00'}</p>
+                {branches.length > 0 ? (
+                    branches.map(branch => (
+                        <Card key={branch.uid} className="cursor-pointer hover:shadow-lg transition-shadow" onClick={() => handleBranchClick(branch.uid)}>
+                            <CardHeader>
+                                <CardTitle className="flex items-center gap-2">
+                                    <LucideUser className="h-5 w-5" />
+                                    {branch.email}
+                                </CardTitle>
+                                 <p className="text-sm text-muted-foreground flex items-center gap-2 pt-1">
+                                    <MapPin className="h-4 w-4" /> {branch.location}
+                                </p>
+                            </CardHeader>
+                            <CardContent className="space-y-4">
+                               <div className="flex items-center justify-between p-3 bg-muted/50 rounded-lg">
+                                    <div>
+                                        <p className="text-sm text-muted-foreground flex items-center gap-1"><DollarSign className="h-4 w-4" /> Ingresos Totales</p>
+                                        <p className="text-xl font-bold">${branch.revenue?.toFixed(2) ?? '0.00'}</p>
+                                    </div>
                                 </div>
-                            </div>
-                             <div className="flex items-center justify-between p-3 bg-muted/50 rounded-lg">
-                                <div>
-                                    <p className="text-sm text-muted-foreground flex items-center gap-1"><ParkingCircle className="h-4 w-4" /> Ocupación</p>
-                                    <p className="text-xl font-bold">{branch.occupiedSpots} / {branch.totalSpots}</p>
+                                 <div className="flex items-center justify-between p-3 bg-muted/50 rounded-lg">
+                                    <div>
+                                        <p className="text-sm text-muted-foreground flex items-center gap-1"><ParkingCircle className="h-4 w-4" /> Ocupación</p>
+                                        <p className="text-xl font-bold">{branch.occupiedSpots} / {branch.totalSpots}</p>
+                                    </div>
                                 </div>
-                            </div>
+                            </CardContent>
+                        </Card>
+                    ))
+                ) : (
+                    <Card className="md:col-span-2 lg:col-span-3">
+                        <CardContent className="pt-6">
+                            <p className="text-center text-muted-foreground">No se han encontrado otras sucursales registradas.</p>
                         </CardContent>
                     </Card>
-                ))}
+                )}
             </div>
         </div>
     );
