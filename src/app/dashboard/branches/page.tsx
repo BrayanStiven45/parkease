@@ -3,7 +3,7 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { collection, getDocs, query, where } from 'firebase/firestore';
+import { collection, getDocs, query } from 'firebase/firestore';
 import { User as LucideUser, MapPin, DollarSign, ParkingCircle } from 'lucide-react';
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -41,21 +41,24 @@ export default function BranchesPage() {
                 setError(null);
                 try {
                     const usersCollection = collection(db, 'users');
-                    const q = query(usersCollection, where("email", "!=", user.email));
+                    const q = query(usersCollection); // Simplificamos la consulta para traer todos los usuarios
                     const usersSnapshot = await getDocs(q);
 
-                    const usersList = usersSnapshot.docs.map(doc => {
-                        const data = doc.data();
-                        return {
-                            ...data,
-                            uid: doc.id,
-                            // Datos de ejemplo para la demo, en una app real vendrían de Firestore o se calcularían
-                            location: "Ubicación Desconocida",
-                            revenue: Math.random() * 2000,
-                            occupiedSpots: Math.floor(Math.random() * 100),
-                            totalSpots: 100,
-                        } as AppUser;
-                    });
+                    const usersList = usersSnapshot.docs
+                        .map(doc => {
+                            const data = doc.data();
+                            return {
+                                ...data,
+                                uid: doc.id,
+                                // Datos de ejemplo para la demo, en una app real vendrían de Firestore o se calcularían
+                                location: "Ubicación Desconocida",
+                                revenue: Math.random() * 2000,
+                                occupiedSpots: Math.floor(Math.random() * 100),
+                                totalSpots: 100,
+                            } as AppUser;
+                        })
+                        .filter(branchUser => branchUser.email !== user.email); // Filtramos el admin aquí
+
                     setBranches(usersList);
                 } catch (e: any) {
                     console.error("Error fetching branches:", e);
