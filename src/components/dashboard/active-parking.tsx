@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { collection, addDoc, serverTimestamp, query, where, onSnapshot, orderBy } from 'firebase/firestore';
+import { collection, addDoc, serverTimestamp, query, where, onSnapshot } from 'firebase/firestore';
 import type { ParkingRecord } from '@/lib/types';
 import { db } from '@/lib/firebase';
 import { useAuth } from '@/contexts/auth-context';
@@ -26,7 +26,7 @@ export default function ActiveParking() {
 
     setIsLoading(true);
     const parkingRecordsCollection = collection(db, 'users', user.uid, 'parkingRecords');
-    const q = query(parkingRecordsCollection, where('status', '==', 'parked'), orderBy('entryTime', 'desc'));
+    const q = query(parkingRecordsCollection, where('status', '==', 'parked'));
 
     const unsubscribe = onSnapshot(q, 
       (snapshot) => {
@@ -35,6 +35,10 @@ export default function ActiveParking() {
           ...doc.data(),
           entryTime: doc.data().entryTime?.toDate().toISOString(), // Convert Firestore Timestamp to ISO string
         })) as ParkingRecord[];
+
+        // Sort records here instead of in the query
+        fetchedRecords.sort((a, b) => new Date(b.entryTime).getTime() - new Date(a.entryTime).getTime());
+        
         setRecords(fetchedRecords);
         setIsLoading(false);
       },
