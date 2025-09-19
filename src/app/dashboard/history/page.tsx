@@ -1,8 +1,9 @@
 'use client';
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { collection, query, where, onSnapshot } from 'firebase/firestore';
+import { isSameDay } from 'date-fns';
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import ParkingHistoryTable from "@/components/history/parking-history-table";
@@ -16,6 +17,8 @@ export default function HistoryPage() {
     const router = useRouter();
     const [historyRecords, setHistoryRecords] = useState<ParkingRecord[]>([]);
     const [isLoadingData, setIsLoadingData] = useState(true);
+    const [searchQuery, setSearchQuery] = useState('');
+    const [selectedDate, setSelectedDate] = useState<Date | undefined>(undefined);
 
     useEffect(() => {
         if (!authLoading && !user) {
@@ -28,8 +31,6 @@ export default function HistoryPage() {
 
         setIsLoadingData(true);
         const parkingRecordsCollection = collection(db, 'users', user.uid, 'parkingRecords');
-        // Se elimina orderBy para evitar el requerimiento de un índice compuesto.
-        // La ordenación se hará en el cliente.
         const q = query(
             parkingRecordsCollection, 
             where('status', '==', 'completed')
@@ -43,7 +44,6 @@ export default function HistoryPage() {
                 exitTime: (doc.data().exitTime as Timestamp)?.toDate().toISOString(),
             })) as ParkingRecord[];
 
-            // Ordenar los registros por fecha de salida descendente en el cliente.
             fetchedRecords.sort((a, b) => 
                 new Date(b.exitTime ?? 0).getTime() - new Date(a.exitTime ?? 0).getTime()
             );
@@ -58,6 +58,14 @@ export default function HistoryPage() {
         return () => unsubscribe();
     }, [user]);
 
+    const filteredRecords = useMemo(() => {
+        return historyRecords.filter(record => {
+            const plateMatch = record.plate.toLowerCase().includes(searchQuery.toLowerCase());
+            const dateMatch = selectedDate ? isSameDay(new Date(record.entryTime), selectedDate) : true;
+            return plateMatch && dateMatch;
+        });
+    }, [historyRecords, searchQuery, selectedDate]);
+
     if (authLoading || !user) {
         return <div className="text-center">Loading...</div>;
     }
@@ -69,7 +77,15 @@ export default function HistoryPage() {
                     <CardTitle>Completed Parking Records</CardTitle>
                 </CardHeader>
                 <CardContent>
-                    <ParkingHistoryTable records={historyRecords} isLoading={isLoadingData} />
+                    <ParkingHistoryTable 
+                        records={filteredRecords} 
+                        isLoading={isLoadingData}
+                        searchQuery={searchQuery}
+                        setSearchQuery={setSearchQuery}
+                        selectedDate={selectedDate}
+                        setSelectedDate={setSelectedDate}
+                        hasActiveFilters={searchQuery.length > 0 || !!selectedDate}
+                    />
                 </CardContent>
             </Card>
         </div>
