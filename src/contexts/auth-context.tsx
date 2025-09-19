@@ -4,7 +4,7 @@ import { createContext, useContext, ReactNode, useEffect, useState } from 'react
 import { useRouter, usePathname } from 'next/navigation';
 import { useAuthState } from 'react-firebase-hooks/auth';
 import type { User } from 'firebase/auth';
-import { signOut, createUserWithEmailAndPassword } from 'firebase/auth';
+import { signOut } from 'firebase/auth';
 import { auth } from '@/lib/firebase';
 
 interface AuthContextType {
@@ -17,56 +17,24 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-// --- Create Mock Users for Demo ---
-let mockUsersCreated = false;
-const createMockUsers = async () => {
-    if (mockUsersCreated) return;
-    mockUsersCreated = true;
-
-    const users = [
-      { email: 'admin@parkease.com' },
-      { email: 'user@parkease.com' },
-    ];
-
-    for (const user of users) {
-        try {
-            await createUserWithEmailAndPassword(auth, user.email, "password");
-            console.log(`Mock user ${user.email} created successfully.`);
-        } catch (error: any) {
-            if (error.code === 'auth/email-already-in-use') {
-                console.log(`Mock user ${user.email} already exists.`);
-            } else {
-                console.error(`Error creating mock user ${user.email}:`, error);
-            }
-        }
-    }
-};
-
-
 export function AuthProvider({ children }: { children: ReactNode }) {
     const [user, loading, error] = useAuthState(auth);
     const router = useRouter();
     const pathname = usePathname();
-    const [initialized, setInitialized] = useState(false);
-
-    useEffect(() => {
-        const initialize = async () => {
-            if (process.env.NODE_ENV === 'development' && !initialized) {
-                await createMockUsers();
-                setInitialized(true);
-            }
-        };
-        initialize();
-    }, [initialized]);
-
+    
+    // The admin is hardcoded for this demo. 
+    // In a real app, this would be managed via custom claims or a database role.
     const isAdmin = user?.email === 'admin@parkease.com';
 
     useEffect(() => {
-        if (!loading && !user && pathname !== '/') {
-            router.push('/');
-        }
-        if (!loading && user && pathname === '/') {
-            router.push('/dashboard');
+        if (!loading) {
+            const isAuthPage = pathname === '/' || pathname === '/signup';
+            if (!user && !isAuthPage) {
+                router.push('/');
+            }
+            if (user && isAuthPage) {
+                router.push('/dashboard');
+            }
         }
     }, [user, loading, router, pathname]);
 
@@ -77,7 +45,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     
     const value = { user, loading, error, isAdmin, logout };
 
-    if ((loading || !initialized) && pathname !== '/') {
+    const isAuthPage = pathname === '/' || pathname === '/signup';
+    if (loading && !isAuthPage) {
         return (
             <div className="flex h-screen items-center justify-center">
                 <p>Loading...</p>

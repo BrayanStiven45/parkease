@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { signInWithEmailAndPassword } from 'firebase/auth';
+import { createUserWithEmailAndPassword } from 'firebase/auth';
 import { auth } from '@/lib/firebase';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
@@ -19,7 +19,7 @@ const formSchema = z.object({
     password: z.string().min(6, { message: 'Password must be at least 6 characters.' }),
 });
 
-export default function LoginForm() {
+export default function SignUpForm() {
     const router = useRouter();
     const { toast } = useToast();
     const [isLoading, setIsLoading] = useState(false);
@@ -35,13 +35,15 @@ export default function LoginForm() {
     async function onSubmit(values: z.infer<typeof formSchema>) {
         setIsLoading(true);
         try {
-            await signInWithEmailAndPassword(auth, values.email, values.password);
+            await createUserWithEmailAndPassword(auth, values.email, values.password);
             router.push('/dashboard');
         } catch (error: any) {
-            toast({
+             toast({
                 variant: "destructive",
-                title: "Authentication Failed",
-                description: "Please check your email and password.",
+                title: "Sign Up Failed",
+                description: error.code === 'auth/email-already-in-use' 
+                    ? 'This email is already in use.'
+                    : 'An unexpected error occurred.',
             });
         } finally {
             setIsLoading(false);
@@ -55,8 +57,8 @@ export default function LoginForm() {
                     <Car className="h-8 w-8 text-primary" />
                     <h1 className="text-3xl font-bold font-headline">ParkEase</h1>
                 </div>
-                <CardTitle>Welcome Back</CardTitle>
-                <CardDescription>Enter your credentials to access your account</CardDescription>
+                <CardTitle>Create an Account</CardTitle>
+                <CardDescription>Enter your details to get started.</CardDescription>
             </CardHeader>
             <Form {...form}>
                 <form onSubmit={form.handleSubmit(onSubmit)}>
@@ -88,9 +90,9 @@ export default function LoginForm() {
                             )}
                         />
                     </CardContent>
-                    <CardFooter className="flex flex-col gap-4">
+                    <CardFooter>
                         <Button type="submit" className="w-full" disabled={isLoading}>
-                            {isLoading ? 'Signing In...' : 'Sign In'}
+                            {isLoading ? 'Creating Account...' : 'Sign Up'}
                         </Button>
                     </CardFooter>
                 </form>
