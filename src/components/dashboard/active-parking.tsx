@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { collection, addDoc, serverTimestamp, query, where, onSnapshot } from 'firebase/firestore';
+import { collection, addDoc, serverTimestamp, query, where, onSnapshot, orderBy } from 'firebase/firestore';
 import type { ParkingRecord } from '@/lib/types';
 import { db } from '@/lib/firebase';
 import { useAuth } from '@/contexts/auth-context';
@@ -26,7 +26,7 @@ export default function ActiveParking() {
 
     setIsLoading(true);
     const parkingRecordsCollection = collection(db, 'users', user.uid, 'parkingRecords');
-    const q = query(parkingRecordsCollection, where('status', '==', 'parked'));
+    const q = query(parkingRecordsCollection, where('status', '==', 'parked'), orderBy('entryTime', 'desc'));
 
     const unsubscribe = onSnapshot(q, 
       (snapshot) => {
