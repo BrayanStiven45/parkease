@@ -7,9 +7,11 @@ import { collection, getDocs, query, where } from 'firebase/firestore';
 import { User as LucideUser, MapPin, DollarSign, ParkingCircle } from 'lucide-react';
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { useAuth } from '@/contexts/auth-context';
 import { db } from '@/lib/firebase';
 import type { User } from 'firebase/auth';
+import { Terminal } from 'lucide-react';
 
 // Extendemos el tipo User de Firebase para incluir cualquier dato adicional que almacenemos
 interface AppUser extends User {
@@ -24,6 +26,7 @@ export default function BranchesPage() {
     const router = useRouter();
     const [branches, setBranches] = useState<AppUser[]>([]);
     const [isLoadingBranches, setIsLoadingBranches] = useState(true);
+    const [error, setError] = useState<string | null>(null);
 
     useEffect(() => {
         if (!loading && !isAdmin) {
@@ -35,9 +38,9 @@ export default function BranchesPage() {
         if (isAdmin && user) {
             const fetchBranches = async () => {
                 setIsLoadingBranches(true);
+                setError(null);
                 try {
                     const usersCollection = collection(db, 'users');
-                    // Excluimos al admin de la lista de sucursales
                     const q = query(usersCollection, where("email", "!=", user.email));
                     const usersSnapshot = await getDocs(q);
 
@@ -54,8 +57,9 @@ export default function BranchesPage() {
                         } as AppUser;
                     });
                     setBranches(usersList);
-                } catch (error) {
-                    console.error("Error fetching branches:", error);
+                } catch (e: any) {
+                    console.error("Error fetching branches:", e);
+                    setError("Failed to load branches. Please check the console for more details.");
                 } finally {
                     setIsLoadingBranches(false);
                 }
@@ -79,6 +83,13 @@ export default function BranchesPage() {
     return (
         <div className="space-y-6">
             <h1 className="text-3xl font-bold">Gestión de Sucursales</h1>
+             {error && (
+                <Alert variant="destructive">
+                    <Terminal className="h-4 w-4" />
+                    <AlertTitle>Error</AlertTitle>
+                    <AlertDescription>{error}</AlertDescription>
+                </Alert>
+            )}
             <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
                 {branches.length > 0 ? (
                     branches.map(branch => (
@@ -109,11 +120,13 @@ export default function BranchesPage() {
                         </Card>
                     ))
                 ) : (
-                    <Card className="md:col-span-2 lg:col-span-3">
-                        <CardContent className="pt-6">
-                            <p className="text-center text-muted-foreground">No se han encontrado otras sucursales registradas.</p>
-                        </CardContent>
-                    </Card>
+                     !error && (
+                        <Card className="md:col-span-2 lg:col-span-3">
+                            <CardContent className="pt-6">
+                                <p className="text-center text-muted-foreground">No se han encontrado otras sucursales registradas.</p>
+                            </CardContent>
+                        </Card>
+                    )
                 )}
             </div>
         </div>

@@ -48,7 +48,7 @@ export default function SignUpForm() {
 
             router.push('/dashboard');
         } catch (error: any) {
-            console.error(error);
+            console.error("Error during sign up:", error);
              toast({
                 variant: "destructive",
                 title: "Sign Up Failed",
