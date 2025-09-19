@@ -1,8 +1,9 @@
+
 'use client';
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { collection, getDocs } from 'firebase/firestore';
+import { collection, getDocs, query, where } from 'firebase/firestore';
 import { User as LucideUser, MapPin, DollarSign, ParkingCircle } from 'lucide-react';
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -19,7 +20,7 @@ interface AppUser extends User {
 }
 
 export default function BranchesPage() {
-    const { isAdmin, loading } = useAuth();
+    const { user, isAdmin, loading } = useAuth();
     const router = useRouter();
     const [branches, setBranches] = useState<AppUser[]>([]);
     const [isLoadingBranches, setIsLoadingBranches] = useState(true);
@@ -31,12 +32,15 @@ export default function BranchesPage() {
     }, [isAdmin, loading, router]);
 
     useEffect(() => {
-        if (isAdmin) {
+        if (isAdmin && user) {
             const fetchBranches = async () => {
                 setIsLoadingBranches(true);
                 try {
                     const usersCollection = collection(db, 'users');
-                    const usersSnapshot = await getDocs(usersCollection);
+                    // Excluimos al admin de la lista de sucursales
+                    const q = query(usersCollection, where("email", "!=", user.email));
+                    const usersSnapshot = await getDocs(q);
+
                     const usersList = usersSnapshot.docs.map(doc => ({
                         ...doc.data(),
                         uid: doc.id,
@@ -55,7 +59,7 @@ export default function BranchesPage() {
             };
             fetchBranches();
         }
-    }, [isAdmin]);
+    }, [isAdmin, user]);
 
     if (loading || isLoadingBranches) {
         return <div className="text-center">Loading...</div>;
