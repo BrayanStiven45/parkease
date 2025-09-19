@@ -1,10 +1,9 @@
-
 'use client';
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { collection, getDocs, query } from 'firebase/firestore';
-import { User as LucideUser, MapPin, DollarSign, ParkingCircle } from 'lucide-react';
+import { collection, getDocs, query, where, onSnapshot } from 'firebase/firestore';
+import { User as LucideUser, DollarSign, ParkingCircle } from 'lucide-react';
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
@@ -13,18 +12,18 @@ import { db } from '@/lib/firebase';
 import type { User } from 'firebase/auth';
 import { Terminal } from 'lucide-react';
 
-// Extendemos el tipo User de Firebase para incluir cualquier dato adicional que almacenemos
-interface AppUser extends User {
-    location?: string;
-    totalSpots?: number;
-    occupiedSpots?: number;
-    revenue?: number;
+interface BranchInfo {
+    uid: string;
+    email: string | null;
+    occupiedSpots: number;
+    totalSpots: number; // For now, this is a static value
+    revenue: number;
 }
 
 export default function BranchesPage() {
     const { user, isAdmin, loading } = useAuth();
     const router = useRouter();
-    const [branches, setBranches] = useState<AppUser[]>([]);
+    const [branches, setBranches] = useState<BranchInfo[]>([]);
     const [isLoadingBranches, setIsLoadingBranches] = useState(true);
     const [error, setError] = useState<string | null>(null);
 
@@ -36,38 +35,54 @@ export default function BranchesPage() {
 
     useEffect(() => {
         if (isAdmin && user) {
-            const fetchBranches = async () => {
-                setIsLoadingBranches(true);
-                setError(null);
-                try {
-                    const usersCollection = collection(db, 'users');
-                    const q = query(usersCollection); // Simplificamos la consulta para traer todos los usuarios
-                    const usersSnapshot = await getDocs(q);
+            setIsLoadingBranches(true);
+            setError(null);
+            
+            const usersCollection = collection(db, 'users');
+            const q = query(usersCollection, where('email', '!=', user.email));
 
-                    const usersList = usersSnapshot.docs
-                        .map(doc => {
-                            const data = doc.data();
-                            return {
-                                ...data,
-                                uid: doc.id,
-                                // Datos de ejemplo para la demo, en una app real vendrían de Firestore o se calcularían
-                                location: "Ubicación Desconocida",
-                                revenue: Math.random() * 2000,
-                                occupiedSpots: Math.floor(Math.random() * 100),
-                                totalSpots: 100,
-                            } as AppUser;
-                        })
-                        .filter(branchUser => branchUser.email !== user.email); // Filtramos el admin aquí
+            const unsubscribe = onSnapshot(q, (usersSnapshot) => {
+                const promises = usersSnapshot.docs.map(async (doc) => {
+                    const userData = doc.data();
+                    const userId = doc.id;
+                    
+                    const parkingRecordsRef = collection(db, 'users', userId, 'parkingRecords');
 
+                    // Get occupied spots
+                    const parkedQuery = query(parkingRecordsRef, where('status', '==', 'parked'));
+                    const parkedSnapshot = await getDocs(parkedQuery);
+                    const occupiedSpots = parkedSnapshot.size;
+
+                    // Get total revenue
+                    const completedQuery = query(parkingRecordsRef, where('status', '==', 'completed'));
+                    const completedSnapshot = await getDocs(completedQuery);
+                    const revenue = completedSnapshot.docs.reduce((acc, doc) => acc + (doc.data().totalCost || 0), 0);
+
+                    return {
+                        uid: userId,
+                        email: userData.email,
+                        occupiedSpots,
+                        totalSpots: 100, // Static value for now
+                        revenue,
+                    };
+                });
+
+                Promise.all(promises).then(usersList => {
                     setBranches(usersList);
-                } catch (e: any) {
-                    console.error("Error fetching branches:", e);
-                    setError("Failed to load branches. Please check the console for more details.");
-                } finally {
                     setIsLoadingBranches(false);
-                }
-            };
-            fetchBranches();
+                }).catch(e => {
+                     console.error("Error fetching branch details:", e);
+                     setError("Failed to load branch details.");
+                     setIsLoadingBranches(false);
+                });
+
+            }, (e) => {
+                console.error("Error fetching branches:", e);
+                setError("Failed to load branches. Please check the console for more details.");
+                setIsLoadingBranches(false);
+            });
+
+            return () => unsubscribe();
         }
     }, [isAdmin, user]);
 
@@ -76,7 +91,7 @@ export default function BranchesPage() {
     }
 
     if (!isAdmin) {
-        return null; // O un mensaje de "Acceso denegado"
+        return null;
     }
 
     const handleBranchClick = (branchId: string) => {
@@ -102,15 +117,12 @@ export default function BranchesPage() {
                                     <LucideUser className="h-5 w-5" />
                                     {branch.email}
                                 </CardTitle>
-                                 <p className="text-sm text-muted-foreground flex items-center gap-2 pt-1">
-                                    <MapPin className="h-4 w-4" /> {branch.location}
-                                </p>
                             </CardHeader>
                             <CardContent className="space-y-4">
                                <div className="flex items-center justify-between p-3 bg-muted/50 rounded-lg">
                                     <div>
                                         <p className="text-sm text-muted-foreground flex items-center gap-1"><DollarSign className="h-4 w-4" /> Ingresos Totales</p>
-                                        <p className="text-xl font-bold">${branch.revenue?.toFixed(2) ?? '0.00'}</p>
+                                        <p className="text-xl font-bold">${branch.revenue.toFixed(2)}</p>
                                     </div>
                                 </div>
                                  <div className="flex items-center justify-between p-3 bg-muted/50 rounded-lg">

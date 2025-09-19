@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { collection, addDoc, serverTimestamp, query, where, onSnapshot } from 'firebase/firestore';
+import { collection, addDoc, serverTimestamp, query, where, onSnapshot, orderBy } from 'firebase/firestore';
 import type { ParkingRecord } from '@/lib/types';
 import { db } from '@/lib/firebase';
 import { useAuth } from '@/contexts/auth-context';
@@ -14,7 +14,12 @@ import VehicleEntryModal from './vehicle-entry-modal';
 import PaymentModal from './payment-modal';
 import { useToast } from '@/hooks/use-toast';
 
-export default function ActiveParking() {
+interface ActiveParkingProps {
+  branchId?: string; // Admin can pass a branchId to view its data
+  readOnly?: boolean; // Admin view is read-only
+}
+
+export default function ActiveParking({ branchId, readOnly = false }: ActiveParkingProps) {
   const { user } = useAuth();
   const { toast } = useToast();
   const [records, setRecords] = useState<ParkingRecord[]>([]);
@@ -24,11 +29,13 @@ export default function ActiveParking() {
   const [isEntryModalOpen, setEntryModalOpen] = useState(false);
   const [selectedRecord, setSelectedRecord] = useState<ParkingRecord | null>(null);
 
+  const targetUserId = branchId || user?.uid;
+
   useEffect(() => {
-    if (!user) return;
+    if (!targetUserId) return;
 
     setIsLoading(true);
-    const parkingRecordsCollection = collection(db, 'users', user.uid, 'parkingRecords');
+    const parkingRecordsCollection = collection(db, 'users', targetUserId, 'parkingRecords');
     const q = query(parkingRecordsCollection, where('status', '==', 'parked'));
 
     const unsubscribe = onSnapshot(q, 
@@ -36,10 +43,9 @@ export default function ActiveParking() {
         const fetchedRecords = snapshot.docs.map(doc => ({
           id: doc.id,
           ...doc.data(),
-          entryTime: doc.data().entryTime?.toDate().toISOString(), // Convert Firestore Timestamp to ISO string
+          entryTime: doc.data().entryTime?.toDate().toISOString(),
         })) as ParkingRecord[];
 
-        // Sort records here instead of in the query
         fetchedRecords.sort((a, b) => new Date(b.entryTime).getTime() - new Date(a.entryTime).getTime());
         
         setRecords(fetchedRecords);
@@ -56,9 +62,8 @@ export default function ActiveParking() {
       }
     );
 
-    // Cleanup subscription on component unmount
     return () => unsubscribe();
-  }, [user, toast]);
+  }, [targetUserId, toast]);
 
   useEffect(() => {
     const lowercasedQuery = searchQuery.toLowerCase();
@@ -69,6 +74,7 @@ export default function ActiveParking() {
   }, [searchQuery, records]);
 
   const handleOpenPaymentModal = (record: ParkingRecord) => {
+    if (readOnly) return;
     setSelectedRecord(record);
   };
 
@@ -77,6 +83,8 @@ export default function ActiveParking() {
   };
 
   const handleAddRecord = async (plate: string) => {
+    if (!targetUserId || readOnly) return;
+
     if (!user) {
       toast({
         variant: 'destructive',
@@ -87,7 +95,7 @@ export default function ActiveParking() {
     }
 
     try {
-      const parkingRecordsCollection = collection(db, 'users', user.uid, 'parkingRecords');
+      const parkingRecordsCollection = collection(db, 'users', targetUserId, 'parkingRecords');
       await addDoc(parkingRecordsCollection, {
         plate,
         entryTime: serverTimestamp(),
@@ -107,9 +115,7 @@ export default function ActiveParking() {
     }
   };
   
-  const handlePaymentSuccess = (recordId: string) => {
-    // This will be implemented later.
-    // For now, we just close the modal.
+  const handlePaymentSuccess = () => {
     handleClosePaymentModal();
   };
 
@@ -130,10 +136,12 @@ export default function ActiveParking() {
                         onChange={(e) => setSearchQuery(e.target.value)}
                     />
                 </div>
-                <Button size="sm" onClick={() => setEntryModalOpen(true)} className="w-full sm:w-auto">
-                    <PlusCircle className="mr-2 h-4 w-4" />
-                    Record Entry
-                </Button>
+                {!readOnly && (
+                  <Button size="sm" onClick={() => setEntryModalOpen(true)} className="w-full sm:w-auto">
+                      <PlusCircle className="mr-2 h-4 w-4" />
+                      Record Entry
+                  </Button>
+                )}
             </div>
           </div>
         </CardHeader>
@@ -143,22 +151,28 @@ export default function ActiveParking() {
             onProcessPayment={handleOpenPaymentModal} 
             isLoading={isLoading}
             hasSearchQuery={searchQuery.length > 0}
+            readOnly={readOnly}
             />
         </CardContent>
       </Card>
 
-      <VehicleEntryModal
-        isOpen={isEntryModalOpen}
-        onClose={() => setEntryModalOpen(false)}
-        onAddRecord={handleAddRecord}
-      />
+      {!readOnly && (
+        <>
+          <VehicleEntryModal
+            isOpen={isEntryModalOpen}
+            onClose={() => setEntryModalOpen(false)}
+            onAddRecord={handleAddRecord}
+          />
 
-      {selectedRecord && (
-        <PaymentModal
-          record={selectedRecord}
-          onClose={handleClosePaymentModal}
-          onPaymentSuccess={handlePaymentSuccess}
-        />
+          {selectedRecord && (
+            <PaymentModal
+              record={selectedRecord}
+              onClose={handleClosePaymentModal}
+              onPaymentSuccess={handlePaymentSuccess}
+              userId={targetUserId}
+            />
+          )}
+        </>
       )}
     </>
   );

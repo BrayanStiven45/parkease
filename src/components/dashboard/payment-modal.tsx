@@ -20,18 +20,16 @@ import { activeTariff, getLoyaltyPoints } from '@/lib/data';
 import { useToast } from '@/hooks/use-toast';
 import { differenceInSeconds } from 'date-fns';
 import { db } from '@/lib/firebase';
-import { useAuth } from '@/contexts/auth-context';
-
 
 interface PaymentModalProps {
   record: ParkingRecord;
   onClose: () => void;
-  onPaymentSuccess: (recordId: string) => void;
+  onPaymentSuccess: () => void;
+  userId?: string; // The ID of the user whose record is being processed
 }
 
-export default function PaymentModal({ record, onClose, onPaymentSuccess }: PaymentModalProps) {
+export default function PaymentModal({ record, onClose, onPaymentSuccess, userId }: PaymentModalProps) {
   const { toast } = useToast();
-  const { user } = useAuth();
   const [pointsToRedeem, setPointsToRedeem] = useState(0);
   const [availablePoints, setAvailablePoints] = useState(0);
   const [isLoading, setIsLoading] = useState(false);
@@ -66,11 +64,11 @@ export default function PaymentModal({ record, onClose, onPaymentSuccess }: Paym
   };
 
   const handlePayment = async () => {
-    if (!user) {
+    if (!userId) {
         toast({
             variant: "destructive",
             title: "Error",
-            description: "You must be logged in to process a payment.",
+            description: "Cannot process payment without a user context.",
         });
         return;
     }
@@ -78,14 +76,14 @@ export default function PaymentModal({ record, onClose, onPaymentSuccess }: Paym
     setIsLoading(true);
 
     try {
-        const recordRef = doc(db, 'users', user.uid, 'parkingRecords', record.id);
+        const recordRef = doc(db, 'users', userId, 'parkingRecords', record.id);
         await updateDoc(recordRef, {
             status: 'completed',
             exitTime: serverTimestamp(),
             totalCost: costDetails.finalAmount
         });
 
-        onPaymentSuccess(record.id);
+        onPaymentSuccess();
         toast({
             title: "Payment Successful",
             description: `Payment for ${record.plate} processed. Total: $${costDetails.finalAmount.toFixed(2)}`,

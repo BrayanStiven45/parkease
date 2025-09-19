@@ -2,8 +2,10 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter, useParams } from 'next/navigation';
-import { doc, getDoc } from 'firebase/firestore';
+import { doc, getDoc, collection, query, where, onSnapshot } from 'firebase/firestore';
 import { Car, Clock, ArrowLeft } from 'lucide-react';
+import { differenceInMinutes } from 'date-fns';
+import type { Timestamp } from 'firebase/firestore';
 
 import { useAuth } from '@/contexts/auth-context';
 import { db } from '@/lib/firebase';
@@ -13,7 +15,6 @@ import { Button } from '@/components/ui/button';
 
 interface BranchData {
     email: string;
-    // Agrega aquí más campos si los tienes en firestore
 }
 
 export default function BranchDetailPage() {
@@ -23,20 +24,17 @@ export default function BranchDetailPage() {
     const branchId = params.branchId as string;
 
     const [branchData, setBranchData] = useState<BranchData | null>(null);
-    const [dashboardMetrics, setDashboardMetrics] = useState({
-        totalParked: 0,
-        avgTime: '0h 0m',
-    });
+    const [totalParked, setTotalParked] = useState(0);
+    const [avgTime, setAvgTime] = useState("0h 0m");
+    const [entryTimes, setEntryTimes] = useState<Date[]>([]);
     const [loading, setLoading] = useState(true);
 
-    // Redirigir si no es admin
     useEffect(() => {
         if (!authLoading && !isAdmin) {
             router.push('/dashboard');
         }
     }, [isAdmin, authLoading, router]);
 
-    // Obtener datos iniciales de la sucursal
     useEffect(() => {
         if (isAdmin && branchId) {
             const fetchBranchData = async () => {
@@ -46,7 +44,6 @@ export default function BranchDetailPage() {
                 if (userDoc.exists()) {
                     setBranchData(userDoc.data() as BranchData);
                 } else {
-                    // Manejar el caso de que la sucursal no exista
                     router.push('/dashboard/branches');
                 }
                 setLoading(false);
@@ -55,20 +52,50 @@ export default function BranchDetailPage() {
         }
     }, [isAdmin, branchId, router]);
 
-    // Simular actualización de datos en tiempo real
     useEffect(() => {
-        if (!isAdmin) return;
+        if (!isAdmin || !branchId) return;
 
-        const interval = setInterval(() => {
-            // En una app real, aquí harías una llamada para obtener datos frescos
-            setDashboardMetrics({
-                totalParked: Math.floor(Math.random() * 50),
-                avgTime: `${Math.floor(Math.random() * 3)}h ${Math.floor(Math.random() * 60)}m`,
-            });
-        }, 2000); // Actualiza cada 2 segundos
+        const parkingRecordsCollection = collection(db, 'users', branchId, 'parkingRecords');
+        const q = query(parkingRecordsCollection, where('status', '==', 'parked'));
 
-        return () => clearInterval(interval);
-    }, [isAdmin]);
+        const unsubscribe = onSnapshot(q, (snapshot) => {
+            const count = snapshot.size;
+            setTotalParked(count);
+
+            const times = snapshot.docs
+                .map(doc => {
+                    const entryTime = (doc.data().entryTime as Timestamp)?.toDate();
+                    return entryTime instanceof Date && !isNaN(entryTime.getTime()) ? entryTime : null;
+                })
+                .filter((time): time is Date => time !== null);
+            
+            setEntryTimes(times);
+        });
+
+        return () => unsubscribe();
+    }, [isAdmin, branchId]);
+
+    useEffect(() => {
+        const calculateAvgTime = () => {
+            if (entryTimes.length > 0) {
+                const now = new Date();
+                const totalMinutes = entryTimes.reduce((acc, entryTime) => {
+                    return acc + differenceInMinutes(now, entryTime);
+                }, 0);
+
+                const avgMinutes = totalMinutes / entryTimes.length;
+                const hours = Math.floor(avgMinutes / 60);
+                const minutes = Math.round(avgMinutes % 60);
+                setAvgTime(`${hours}h ${minutes}m`);
+            } else {
+                setAvgTime("0h 0m");
+            }
+        };
+
+        calculateAvgTime();
+        const intervalId = setInterval(calculateAvgTime, 1000);
+        return () => clearInterval(intervalId);
+    }, [entryTimes]);
 
 
     if (authLoading || loading) {
@@ -90,45 +117,35 @@ export default function BranchDetailPage() {
              <div className="space-y-6">
                 <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
                     <Card>
-                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                        <CardTitle className="text-sm font-medium">
-                        Vehicles Currently Parked
-                        </CardTitle>
-                        <Car className="h-4 w-4 text-muted-foreground" />
-                    </CardHeader>
-                    <CardContent>
-                        <div className="text-2xl font-bold">{dashboardMetrics.totalParked}</div>
-                        <p className="text-xs text-muted-foreground">
-                        Live count of vehicles in the parking lot
-                        </p>
-                    </CardContent>
+                        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                            <CardTitle className="text-sm font-medium">
+                            Vehicles Currently Parked
+                            </CardTitle>
+                            <Car className="h-4 w-4 text-muted-foreground" />
+                        </CardHeader>
+                        <CardContent>
+                            <div className="text-2xl font-bold">{totalParked}</div>
+                            <p className="text-xs text-muted-foreground">
+                            Live count of vehicles in the parking lot
+                            </p>
+                        </CardContent>
                     </Card>
                     <Card>
-                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                        <CardTitle className="text-sm font-medium">
-                        Average Parking Time
-                        </CardTitle>
-                        <Clock className="h-4 w-4 text-muted-foreground" />
-                    </CardHeader>
-                    <CardContent>
-                        <div className="text-2xl font-bold">{dashboardMetrics.avgTime}</div>
-                        <p className="text-xs text-muted-foreground">
-                        Based on currently parked vehicles
-                        </p>
-                    </CardContent>
+                        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                            <CardTitle className="text-sm font-medium">
+                            Average Parking Time
+                            </CardTitle>
+                            <Clock className="h-4 w-4 text-muted-foreground" />
+                        </CardHeader>
+                        <CardContent>
+                            <div className="text-2xl font-bold">{avgTime}</div>
+                            <p className="text-xs text-muted-foreground">
+                            Based on currently parked vehicles
+                            </p>
+                        </CardContent>
                     </Card>
                 </div>
-                {/* Aquí podrías mostrar la tabla de parqueos activos de esa sucursal */}
-                 <Card>
-                    <CardHeader>
-                        <CardTitle>Active Parking (Simulated for {branchData?.email})</CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                       <p className="text-center text-muted-foreground p-8">
-                            Live parking data for this branch would be displayed here.
-                       </p>
-                    </CardContent>
-                </Card>
+                {branchId && <ActiveParking branchId={branchId} readOnly={true} />}
             </div>
         </div>
     );
