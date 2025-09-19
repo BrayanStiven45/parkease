@@ -14,12 +14,12 @@ import { useAuth } from '@/contexts/auth-context';
 
 const menuItems = [
   { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
-  { href: '/history', label: 'Parking History', icon: History },
-  { href: '/rate-suggester', label: 'AI Rate Suggester', icon: Bot },
+  { href: '/dashboard/history', label: 'Parking History', icon: History },
+  { href: '/dashboard/rate-suggester', label: 'AI Rate Suggester', icon: Bot },
 ];
 
 const adminMenuItems = [
-    { href: '/branches', label: 'Branches', icon: Building },
+    { href: '/dashboard/branches', label: 'Branches', icon: Building },
 ];
 
 export default function AppSidebar() {
