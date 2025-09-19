@@ -13,47 +13,75 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
-import { Car } from 'lucide-react';
+import { Car, Eye, EyeOff } from 'lucide-react';
 
 const formSchema = z.object({
-    email: z.string().email({ message: 'Please enter a valid email.' }),
-    password: z.string().min(6, { message: 'Password must be at least 6 characters.' }),
+    username: z.string().min(2, { message: 'Username must be at least 2 characters.' }),
+    parkingLotName: z.string().min(3, { message: 'Parking lot name must be at least 3 characters.' }),
+    maxCapacity: z.coerce.number().min(1, { message: 'Capacity must be at least 1.' }),
+    hourlyCost: z.coerce.number().min(0.1, { message: 'Hourly cost must be positive.' }),
+    address: z.string().min(5, { message: 'Address is required.' }),
+    city: z.string().min(2, { message: 'City is required.' }),
+    password: z.string().min(8, { message: 'Password must be at least 8 characters.' }),
+    confirmPassword: z.string(),
+}).refine(data => data.password === data.confirmPassword, {
+    message: "Passwords don't match",
+    path: ["confirmPassword"],
 });
 
 export default function SignUpForm() {
     const router = useRouter();
     const { toast } = useToast();
     const [isLoading, setIsLoading] = useState(false);
+    const [showPassword, setShowPassword] = useState(false);
 
     const form = useForm<z.infer<typeof formSchema>>({
         resolver: zodResolver(formSchema),
         defaultValues: {
-            email: '',
+            username: '',
+            parkingLotName: '',
+            maxCapacity: 100,
+            hourlyCost: 2.50,
+            address: '',
+            city: '',
             password: '',
+            confirmPassword: '',
         },
     });
 
+    const sanitizeName = (name: string) => {
+        return name.toLowerCase().replace(/[^a-z0-9]/g, '');
+    };
+
     async function onSubmit(values: z.infer<typeof formSchema>) {
         setIsLoading(true);
+        const sanitizedName = sanitizeName(values.parkingLotName);
+        const generatedEmail = `${sanitizedName}@parkease.com`;
+
         try {
-            const userCredential = await createUserWithEmailAndPassword(auth, values.email, values.password);
+            const userCredential = await createUserWithEmailAndPassword(auth, generatedEmail, values.password);
             const user = userCredential.user;
 
-            // Guardar información del usuario en Firestore
             await setDoc(doc(db, "users", user.uid), {
-                email: user.email,
                 uid: user.uid,
+                username: values.username,
+                parkingLotName: values.parkingLotName,
+                maxCapacity: values.maxCapacity,
+                hourlyCost: values.hourlyCost,
+                address: values.address,
+                city: values.city,
+                email: generatedEmail, // Store the generated email
                 createdAt: new Date(),
             });
 
             router.push('/dashboard');
         } catch (error: any) {
             console.error("Error during sign up:", error);
-             toast({
+            toast({
                 variant: "destructive",
                 title: "Sign Up Failed",
-                description: error.code === 'auth/email-already-in-use' 
-                    ? 'This email is already in use.'
+                description: error.code === 'auth/email-already-in-use'
+                    ? `The email ${generatedEmail} is already in use. Please choose a different parking lot name.`
                     : 'An unexpected error occurred.',
             });
         } finally {
@@ -62,45 +90,57 @@ export default function SignUpForm() {
     }
 
     return (
-        <Card className="w-full max-w-sm">
+        <Card className="w-full max-w-lg">
             <CardHeader className="text-center">
-                 <div className="flex justify-center items-center gap-2 mb-4">
+                <div className="flex justify-center items-center gap-2 mb-4">
                     <Car className="h-8 w-8 text-primary" />
                     <h1 className="text-3xl font-bold font-headline">ParkEase</h1>
                 </div>
                 <CardTitle>Create an Account</CardTitle>
-                <CardDescription>Enter your details to get started.</CardDescription>
+                <CardDescription>Enter your business details to get started.</CardDescription>
             </CardHeader>
             <Form {...form}>
                 <form onSubmit={form.handleSubmit(onSubmit)}>
                     <CardContent className="space-y-4">
-                        <FormField
-                            control={form.control}
-                            name="email"
-                            render={({ field }) => (
-                                <FormItem>
-                                    <FormLabel>Email</FormLabel>
-
-                                    <FormControl>
-                                        <Input type="email" placeholder="name@example.com" {...field} />
-                                    </FormControl>
-                                    <FormMessage />
-                                </FormItem>
-                            )}
-                        />
-                        <FormField
-                            control={form.control}
-                            name="password"
-                            render={({ field }) => (
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <FormField control={form.control} name="username" render={({ field }) => (
+                                <FormItem><FormLabel>Your Name</FormLabel><FormControl><Input placeholder="e.g., Juan Pérez" {...field} /></FormControl><FormMessage /></FormItem>
+                            )} />
+                            <FormField control={form.control} name="parkingLotName" render={({ field }) => (
+                                <FormItem><FormLabel>Parking Lot Name</FormLabel><FormControl><Input placeholder="e.g., Estacionamiento Central" {...field} /></FormControl><FormMessage /></FormItem>
+                            )} />
+                            <FormField control={form.control} name="maxCapacity" render={({ field }) => (
+                                <FormItem><FormLabel>Max Vehicle Capacity</FormLabel><FormControl><Input type="number" {...field} /></FormControl><FormMessage /></FormItem>
+                            )} />
+                            <FormField control={form.control} name="hourlyCost" render={({ field }) => (
+                                <FormItem><FormLabel>Cost per Hour</FormLabel><FormControl><Input type="number" step="0.01" {...field} /></FormControl><FormMessage /></FormItem>
+                            )} />
+                            <FormField control={form.control} name="address" render={({ field }) => (
+                                <FormItem><FormLabel>Address</FormLabel><FormControl><Input placeholder="e.g., 123 Main St" {...field} /></FormControl><FormMessage /></FormItem>
+                            )} />
+                            <FormField control={form.control} name="city" render={({ field }) => (
+                                <FormItem><FormLabel>City</FormLabel><FormControl><Input placeholder="e.g., Metropolis" {...field} /></FormControl><FormMessage /></FormItem>
+                            )} />
+                        </div>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <FormField control={form.control} name="password" render={({ field }) => (
                                 <FormItem>
                                     <FormLabel>Password</FormLabel>
                                     <FormControl>
-                                        <Input type="password" placeholder="••••••••" {...field} />
+                                        <div className="relative">
+                                            <Input type={showPassword ? "text" : "password"} placeholder="••••••••" {...field} />
+                                            <Button type="button" variant="ghost" size="icon" className="absolute right-1 top-1/2 -translate-y-1/2 h-7 w-7" onClick={() => setShowPassword(!showPassword)}>
+                                                {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                                            </Button>
+                                        </div>
                                     </FormControl>
                                     <FormMessage />
                                 </FormItem>
-                            )}
-                        />
+                            )} />
+                            <FormField control={form.control} name="confirmPassword" render={({ field }) => (
+                                <FormItem><FormLabel>Confirm Password</FormLabel><FormControl><Input type={showPassword ? "text" : "password"} placeholder="••••••••" {...field} /></FormControl><FormMessage /></FormItem>
+                            )} />
+                        </div>
                     </CardContent>
                     <CardFooter>
                         <Button type="submit" className="w-full" disabled={isLoading}>

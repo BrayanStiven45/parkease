@@ -2,21 +2,20 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { collection, getDocs, query, where, onSnapshot } from 'firebase/firestore';
+import { collection, getDocs, query, onSnapshot, where } from 'firebase/firestore';
 import { User as LucideUser, DollarSign, ParkingCircle } from 'lucide-react';
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { useAuth } from '@/contexts/auth-context';
 import { db } from '@/lib/firebase';
-import type { User } from 'firebase/auth';
 import { Terminal } from 'lucide-react';
 
 interface BranchInfo {
     uid: string;
-    email: string | null;
+    parkingLotName: string | null;
     occupiedSpots: number;
-    totalSpots: number; // For now, this is a static value
+    maxCapacity: number;
     revenue: number;
 }
 
@@ -39,6 +38,7 @@ export default function BranchesPage() {
             setError(null);
             
             const usersCollection = collection(db, 'users');
+            // Query all users except the admin
             const q = query(usersCollection, where('email', '!=', user.email));
 
             const unsubscribe = onSnapshot(q, (usersSnapshot) => {
@@ -60,9 +60,9 @@ export default function BranchesPage() {
 
                     return {
                         uid: userId,
-                        email: userData.email,
+                        parkingLotName: userData.parkingLotName || userData.email, // Fallback to email
                         occupiedSpots,
-                        totalSpots: 100, // Static value for now
+                        maxCapacity: userData.maxCapacity || 0,
                         revenue,
                     };
                 });
@@ -115,7 +115,7 @@ export default function BranchesPage() {
                             <CardHeader>
                                 <CardTitle className="flex items-center gap-2">
                                     <LucideUser className="h-5 w-5" />
-                                    {branch.email}
+                                    {branch.parkingLotName}
                                 </CardTitle>
                             </CardHeader>
                             <CardContent className="space-y-4">
@@ -128,7 +128,7 @@ export default function BranchesPage() {
                                  <div className="flex items-center justify-between p-3 bg-muted/50 rounded-lg">
                                     <div>
                                         <p className="text-sm text-muted-foreground flex items-center gap-1"><ParkingCircle className="h-4 w-4" /> Ocupación</p>
-                                        <p className="text-xl font-bold">{branch.occupiedSpots} / {branch.totalSpots}</p>
+                                        <p className="text-xl font-bold">{branch.occupiedSpots} / {branch.maxCapacity}</p>
                                     </div>
                                 </div>
                             </CardContent>

@@ -6,7 +6,14 @@ import { Button } from '@/components/ui/button';
 import { useAuth } from '@/contexts/auth-context';
 
 export default function AppHeader() {
-  const { user, loading, logout } = useAuth();
+  const { user, userData, loading, logout } = useAuth();
+  
+  const welcomeMessage = () => {
+    if (!user) return null;
+    if (userData?.username) return `Welcome, ${userData.username}`;
+    return `Welcome, ${user.email}`;
+  }
+
   return (
     <header className="sticky top-0 z-10 flex h-16 items-center gap-4 border-b bg-card px-4 sm:px-6">
       <div className="md:hidden">
@@ -19,7 +26,7 @@ export default function AppHeader() {
       <div className="ml-auto flex items-center gap-2">
         {user && (
             <span className="text-sm text-muted-foreground hidden sm:inline">
-                Welcome, {user.email}
+                {welcomeMessage()}
             </span>
         )}
         <Button variant="outline" size="sm" onClick={logout} disabled={loading}>
