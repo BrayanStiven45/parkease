@@ -1,4 +1,3 @@
-import 'dotenv/config';
 import type { Metadata } from 'next';
 import './globals.css';
 import { Toaster } from '@/components/ui/toaster';
