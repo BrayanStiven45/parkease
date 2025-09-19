@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useMemo } from 'react';
+import { doc, updateDoc, serverTimestamp } from 'firebase/firestore';
 import {
   Dialog,
   DialogContent,
@@ -18,6 +19,9 @@ import type { ParkingRecord } from '@/lib/types';
 import { activeTariff, getLoyaltyPoints } from '@/lib/data';
 import { useToast } from '@/hooks/use-toast';
 import { differenceInSeconds } from 'date-fns';
+import { db } from '@/lib/firebase';
+import { useAuth } from '@/contexts/auth-context';
+
 
 interface PaymentModalProps {
   record: ParkingRecord;
@@ -27,6 +31,7 @@ interface PaymentModalProps {
 
 export default function PaymentModal({ record, onClose, onPaymentSuccess }: PaymentModalProps) {
   const { toast } = useToast();
+  const { user } = useAuth();
   const [pointsToRedeem, setPointsToRedeem] = useState(0);
   const [availablePoints, setAvailablePoints] = useState(0);
   const [isLoading, setIsLoading] = useState(false);
@@ -47,7 +52,7 @@ export default function PaymentModal({ record, onClose, onPaymentSuccess }: Paym
       hoursParked: hoursParked.toFixed(2),
       initialCost: initialCost.toFixed(2),
       pointsDiscount: pointsDiscount.toFixed(2),
-      finalAmount: finalAmount.toFixed(2),
+      finalAmount: parseFloat(finalAmount.toFixed(2)),
     };
   }, [record.entryTime, pointsToRedeem]);
 
@@ -60,17 +65,43 @@ export default function PaymentModal({ record, onClose, onPaymentSuccess }: Paym
     }
   };
 
-  const handlePayment = () => {
+  const handlePayment = async () => {
+    if (!user) {
+        toast({
+            variant: "destructive",
+            title: "Error",
+            description: "You must be logged in to process a payment.",
+        });
+        return;
+    }
+    
     setIsLoading(true);
-    // Simulate API call
-    setTimeout(() => {
-      onPaymentSuccess(record.id);
-      toast({
-        title: "Payment Successful",
-        description: `Payment for ${record.plate} processed. Total: $${costDetails.finalAmount}`,
-      });
-      setIsLoading(false);
-    }, 1000);
+
+    try {
+        const recordRef = doc(db, 'users', user.uid, 'parkingRecords', record.id);
+        await updateDoc(recordRef, {
+            status: 'completed',
+            exitTime: serverTimestamp(),
+            totalCost: costDetails.finalAmount
+        });
+
+        onPaymentSuccess(record.id);
+        toast({
+            title: "Payment Successful",
+            description: `Payment for ${record.plate} processed. Total: $${costDetails.finalAmount.toFixed(2)}`,
+        });
+
+    } catch (error) {
+        console.error("Error processing payment: ", error);
+        toast({
+            variant: "destructive",
+            title: "Payment Failed",
+            description: "Could not update the parking record.",
+        });
+    } finally {
+        setIsLoading(false);
+        onClose(); // Close modal on success or failure
+    }
   };
 
   return (
@@ -114,7 +145,7 @@ export default function PaymentModal({ record, onClose, onPaymentSuccess }: Paym
            
           <div className="space-y-2 text-lg">
             <div className="flex justify-between"><span>Points Discount:</span> <span className="text-green-600">-${costDetails.pointsDiscount}</span></div>
-            <div className="flex justify-between font-bold"><span>Total Due:</span> <span>${costDetails.finalAmount}</span></div>
+            <div className="flex justify-between font-bold"><span>Total Due:</span> <span>${costDetails.finalAmount.toFixed(2)}</span></div>
           </div>
         </div>
         <DialogFooter>
