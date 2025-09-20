@@ -102,6 +102,7 @@ export default function BranchesPage() {
         if (!branchToDelete) return;
         
         try {
+            // Step 1: Delete the user's document from Firestore. This is a safe client-side operation.
             await deleteDoc(doc(db, "users", branchToDelete.uid));
             
             toast({
