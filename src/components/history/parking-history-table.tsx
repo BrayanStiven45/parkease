@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import {
   Table,
   TableBody,
@@ -45,9 +45,9 @@ export default function ParkingHistoryTable({
     const [currentPage, setCurrentPage] = useState(1);
     
     // Reset to page 1 when records change due to filtering
-    useState(() => {
+    useEffect(() => {
         setCurrentPage(1);
-    });
+    }, [records]);
 
     const maxPage = Math.ceil(records.length / ITEMS_PER_PAGE);
     const paginatedRecords = records.slice(

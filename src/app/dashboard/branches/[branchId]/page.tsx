@@ -1,10 +1,10 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import { doc, getDoc, collection, query, where, onSnapshot } from 'firebase/firestore';
 import { Car, Clock, ArrowLeft } from 'lucide-react';
-import { differenceInMinutes } from 'date-fns';
+import { differenceInMinutes, isSameDay } from 'date-fns';
 import type { Timestamp } from 'firebase/firestore';
 
 import { useAuth } from '@/contexts/auth-context';
@@ -12,6 +12,8 @@ import { db } from '@/lib/firebase';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import ActiveParking from '@/components/dashboard/active-parking';
 import { Button } from '@/components/ui/button';
+import type { ParkingRecord } from '@/lib/types';
+import ParkingHistoryTable from '@/components/history/parking-history-table';
 
 interface BranchData {
     email: string;
@@ -28,6 +30,11 @@ export default function BranchDetailPage() {
     const [avgTime, setAvgTime] = useState("0h 0m");
     const [entryTimes, setEntryTimes] = useState<Date[]>([]);
     const [loading, setLoading] = useState(true);
+
+    const [historyRecords, setHistoryRecords] = useState<ParkingRecord[]>([]);
+    const [isLoadingHistory, setIsLoadingHistory] = useState(true);
+    const [searchQuery, setSearchQuery] = useState('');
+    const [selectedDate, setSelectedDate] = useState<Date | undefined>(undefined);
 
     useEffect(() => {
         if (!authLoading && !isAdmin) {
@@ -55,10 +62,11 @@ export default function BranchDetailPage() {
     useEffect(() => {
         if (!isAdmin || !branchId) return;
 
+        // Fetch active parking records
         const parkingRecordsCollection = collection(db, 'users', branchId, 'parkingRecords');
-        const q = query(parkingRecordsCollection, where('status', '==', 'parked'));
+        const activeQuery = query(parkingRecordsCollection, where('status', '==', 'parked'));
 
-        const unsubscribe = onSnapshot(q, (snapshot) => {
+        const unsubscribeActive = onSnapshot(activeQuery, (snapshot) => {
             const count = snapshot.size;
             setTotalParked(count);
 
@@ -72,7 +80,30 @@ export default function BranchDetailPage() {
             setEntryTimes(times);
         });
 
-        return () => unsubscribe();
+        // Fetch completed history records
+        setIsLoadingHistory(true);
+        const historyQuery = query(parkingRecordsCollection, where('status', '==', 'completed'));
+        const unsubscribeHistory = onSnapshot(historyQuery, (snapshot) => {
+             const fetchedRecords = snapshot.docs.map(doc => ({
+                id: doc.id,
+                ...doc.data(),
+                entryTime: (doc.data().entryTime as Timestamp)?.toDate().toISOString(),
+                exitTime: (doc.data().exitTime as Timestamp)?.toDate().toISOString(),
+            })) as ParkingRecord[];
+
+            fetchedRecords.sort((a, b) => 
+                new Date(b.exitTime ?? 0).getTime() - new Date(a.exitTime ?? 0).getTime()
+            );
+
+            setHistoryRecords(fetchedRecords);
+            setIsLoadingHistory(false);
+        });
+
+
+        return () => {
+            unsubscribeActive();
+            unsubscribeHistory();
+        };
     }, [isAdmin, branchId]);
 
     useEffect(() => {
@@ -96,6 +127,14 @@ export default function BranchDetailPage() {
         const intervalId = setInterval(calculateAvgTime, 1000);
         return () => clearInterval(intervalId);
     }, [entryTimes]);
+
+     const filteredRecords = useMemo(() => {
+        return historyRecords.filter(record => {
+            const plateMatch = record.plate.toLowerCase().includes(searchQuery.toLowerCase());
+            const dateMatch = selectedDate ? isSameDay(new Date(record.entryTime), selectedDate) : true;
+            return plateMatch && dateMatch;
+        });
+    }, [historyRecords, searchQuery, selectedDate]);
 
 
     if (authLoading || loading) {
@@ -146,6 +185,23 @@ export default function BranchDetailPage() {
                     </Card>
                 </div>
                 {branchId && <ActiveParking branchId={branchId} readOnly={true} />}
+
+                 <Card>
+                    <CardHeader>
+                        <CardTitle>Completed Parking Records</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                        <ParkingHistoryTable 
+                            records={filteredRecords} 
+                            isLoading={isLoadingHistory}
+                            searchQuery={searchQuery}
+                            setSearchQuery={setSearchQuery}
+                            selectedDate={selectedDate}
+                            setSelectedDate={setSelectedDate}
+                            hasActiveFilters={searchQuery.length > 0 || !!selectedDate}
+                        />
+                    </CardContent>
+                </Card>
             </div>
         </div>
     );
