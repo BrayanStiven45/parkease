@@ -3,7 +3,7 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { collection, getDocs, query, onSnapshot, where } from 'firebase/firestore';
+import { collection, getDocs, query, onSnapshot, where, deleteDoc, doc } from 'firebase/firestore';
 import { User as LucideUser, DollarSign, ParkingCircle, PlusCircle, Trash2 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
@@ -22,7 +22,6 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
 import { useToast } from '@/hooks/use-toast';
-import { deleteUser } from '@/app/actions/delete-user';
 
 
 interface BranchInfo {
@@ -105,16 +104,14 @@ export default function BranchesPage() {
         setIsDeleting(true);
         
         try {
-            const result = await deleteUser({ uidToDelete: branchToDelete.uid });
+            // This will delete the user's document from the 'users' collection in Firestore.
+            await deleteDoc(doc(db, "users", branchToDelete.uid));
             
-            if (result.success) {
-                toast({
-                    title: "Success",
-                    description: `Branch "${branchToDelete.parkingLotName}" and associated user have been deleted.`,
-                });
-            } else {
-                 throw new Error(result.message);
-            }
+            toast({
+                title: "Success",
+                description: `Branch "${branchToDelete.parkingLotName}" data has been deleted. Please delete the user from Firebase Authentication console manually.`,
+            });
+            
         } catch (e: any) {
             console.error("Error deleting branch: ", e);
             toast({
@@ -215,8 +212,8 @@ export default function BranchesPage() {
                     <AlertDialogHeader>
                     <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
                     <AlertDialogDescription>
-                        This action will permanently delete the branch user from Firebase Authentication
-                        and their data from Firestore. This cannot be undone.
+                        This action will permanently delete the branch data from Firestore.
+                        You will need to manually delete the user from Firebase Authentication. This cannot be undone.
                     </AlertDialogDescription>
                     </AlertDialogHeader>
                     <AlertDialogFooter>
