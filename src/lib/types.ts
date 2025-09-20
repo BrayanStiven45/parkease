@@ -5,6 +5,7 @@ export type ParkingRecord = {
   exitTime?: string;
   status: 'parked' | 'completed';
   totalCost?: number;
+  parkingLotName?: string; // Optional: for admin view
 };
 
 export type LoyaltyAccount = {

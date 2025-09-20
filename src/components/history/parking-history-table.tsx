@@ -27,6 +27,7 @@ interface ParkingHistoryTableProps {
   selectedDate: Date | undefined;
   setSelectedDate: (date: Date | undefined) => void;
   hasActiveFilters: boolean;
+  isAdmin?: boolean;
 }
 
 const ITEMS_PER_PAGE = 10;
@@ -39,17 +40,20 @@ export default function ParkingHistoryTable({
     selectedDate,
     setSelectedDate,
     hasActiveFilters,
+    isAdmin = false,
 }: ParkingHistoryTableProps) {
     const [currentPage, setCurrentPage] = useState(1);
+    
+    // Reset to page 1 when records change due to filtering
+    useState(() => {
+        setCurrentPage(1);
+    });
+
     const maxPage = Math.ceil(records.length / ITEMS_PER_PAGE);
     const paginatedRecords = records.slice(
         (currentPage - 1) * ITEMS_PER_PAGE,
         currentPage * ITEMS_PER_PAGE
     );
-     // Reset to page 1 when records change due to filtering
-    useState(() => {
-        setCurrentPage(1);
-    });
 
     const getEmptyStateMessage = () => {
         if (hasActiveFilters) {
@@ -113,6 +117,7 @@ export default function ParkingHistoryTable({
         <TableHeader>
             <TableRow>
             <TableHead>Plate</TableHead>
+            {isAdmin && <TableHead>Branch</TableHead>}
             <TableHead>Entry Time</TableHead>
             <TableHead>Exit Time</TableHead>
             <TableHead className="text-right">Total Cost</TableHead>
@@ -123,6 +128,7 @@ export default function ParkingHistoryTable({
             paginatedRecords.map((record) => (
                 <TableRow key={record.id}>
                 <TableCell className="font-medium font-code">{record.plate}</TableCell>
+                {isAdmin && <TableCell>{record.parkingLotName}</TableCell>}
                 <TableCell>{format(new Date(record.entryTime), 'Pp')}</TableCell>
                 <TableCell>{record.exitTime ? format(new Date(record.exitTime), 'Pp') : '-'}</TableCell>
                 <TableCell className="text-right">${record.totalCost?.toFixed(2) ?? 'N/A'}</TableCell>
@@ -130,7 +136,7 @@ export default function ParkingHistoryTable({
             ))
             ) : (
             <TableRow>
-                <TableCell colSpan={4} className="text-center">
+                <TableCell colSpan={isAdmin ? 5 : 4} className="text-center">
                     {getEmptyStateMessage()}
                 </TableCell>
             </TableRow>
@@ -147,7 +153,7 @@ export default function ParkingHistoryTable({
             Previous
             </Button>
             <span className="text-sm">
-                Page {currentPage} of {maxPage > 0 ? maxPage : 1}
+                Page {currentPage > maxPage ? maxPage : currentPage} of {maxPage > 0 ? maxPage : 1}
             </span>
             <Button
             variant="outline"
