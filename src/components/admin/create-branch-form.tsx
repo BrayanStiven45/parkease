@@ -6,9 +6,9 @@ import { useRouter } from 'next/navigation';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { createUserWithEmailAndPassword } from 'firebase/auth';
+import { createUserWithEmailAndPassword, initializeAuth, browserLocalPersistence, type Auth } from 'firebase/auth';
 import { doc, setDoc } from 'firebase/firestore';
-import { auth, db } from '@/lib/firebase';
+import { db, app as mainApp } from '@/lib/firebase'; // Import mainApp
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
@@ -58,12 +58,17 @@ export default function CreateBranchForm() {
         setIsLoading(true);
         const sanitizedName = sanitizeName(values.parkingLotName);
         const email = `${sanitizedName}@parkease.com`;
-
+        
+        // Create a temporary, isolated Auth instance.
+        // This prevents the admin from being logged out.
+        let tempAuth: Auth | null = null;
         try {
-            // This creates a temporary auth instance to create the user
-            // without logging the admin out. This is a simplified approach.
-            // A robust solution would use Firebase Admin SDK in a Cloud Function.
-            const userCredential = await createUserWithEmailAndPassword(auth, email, values.password);
+            tempAuth = initializeAuth(mainApp, {
+                persistence: browserLocalPersistence,
+                // No popupRedirectResolver needed for this operation
+            });
+
+            const userCredential = await createUserWithEmailAndPassword(tempAuth, email, values.password);
             const user = userCredential.user;
 
             await setDoc(doc(db, "users", user.uid), {
@@ -96,6 +101,10 @@ export default function CreateBranchForm() {
             });
         } finally {
             setIsLoading(false);
+             if (tempAuth) {
+                // Clean up the temporary auth instance if needed, though usually not required
+                // as it's scoped and doesn't interfere with the main auth instance.
+            }
         }
     }
 
