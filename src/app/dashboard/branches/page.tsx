@@ -102,22 +102,20 @@ export default function BranchesPage() {
         if (!branchToDelete) return;
         
         try {
-            // NOTE: This only deletes the Firestore user document.
-            // A complete solution would require a Firebase Function to delete
-            // the user from Firebase Auth and all their subcollections.
+            // This will delete the user's document from the 'users' collection in Firestore.
             await deleteDoc(doc(db, "users", branchToDelete.uid));
             
             toast({
                 title: "Success",
-                description: `Branch "${branchToDelete.parkingLotName}" has been deleted.`,
+                description: `Branch "${branchToDelete.parkingLotName}" has been deleted from the database.`,
             });
             setBranchToDelete(null); // Close the dialog
         } catch (e) {
-            console.error("Error deleting branch: ", e);
+            console.error("Error deleting branch document: ", e);
             toast({
                 variant: "destructive",
                 title: "Error",
-                description: "Failed to delete the branch.",
+                description: "Failed to delete the branch's database record.",
             });
             setBranchToDelete(null);
         }
@@ -210,8 +208,9 @@ export default function BranchesPage() {
                     <AlertDialogHeader>
                     <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
                     <AlertDialogDescription>
-                        This action cannot be undone. This will permanently delete the branch
-                        and all its associated data. To delete the user from Authentication, you must use a Firebase Function.
+                        This action will permanently delete the branch's data from Firestore. 
+                        This does NOT delete the user account from Firebase Authentication. 
+                        To fully remove the user, you must do so from the Firebase Console or with a server-side function.
                     </AlertDialogDescription>
                     </AlertDialogHeader>
                     <AlertDialogFooter>
