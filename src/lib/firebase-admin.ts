@@ -16,10 +16,19 @@ if (admin.apps.length === 0) {
     });
   } else {
     // Fallback for environments where default credentials might be available
-    adminApp = admin.initializeApp();
+    // In this specific environment, default credentials are not working,
+    // so we avoid calling initializeApp() without credentials to prevent a crash.
+    // The app will rely on the existing admin app instance if available.
+    if (admin.apps.length > 0) {
+      adminApp = admin.app()!;
+    } else {
+      console.warn("Firebase Admin SDK not initialized. GOOGLE_APPLICATION_CREDENTIALS environment variable is not set.");
+      // Assign a temporary object to avoid crashes on import, though admin features will fail.
+      adminApp = {} as admin.app.App;
+    }
   }
 } else {
-  adminApp = admin.app();
+  adminApp = admin.app()!;
 }
 
 export { adminApp };
