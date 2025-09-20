@@ -6,7 +6,7 @@ import { useRouter } from 'next/navigation';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { createUserWithEmailAndPassword, initializeAuth, browserLocalPersistence, type Auth } from 'firebase/auth';
+import { createUserWithEmailAndPassword, getAuth, browserLocalPersistence, type Auth } from 'firebase/auth';
 import { doc, setDoc } from 'firebase/firestore';
 import { db, app as mainApp } from '@/lib/firebase'; // Import mainApp
 import { Button } from '@/components/ui/button';
@@ -63,10 +63,9 @@ export default function CreateBranchForm() {
         // This prevents the admin from being logged out.
         let tempAuth: Auth | null = null;
         try {
-            tempAuth = initializeAuth(mainApp, {
-                persistence: browserLocalPersistence,
-                // No popupRedirectResolver needed for this operation
-            });
+            // Use getAuth on the main app instance. This doesn't re-initialize,
+            // but gets an auth instance tied to the app, which is what we need.
+            tempAuth = getAuth(mainApp);
 
             const userCredential = await createUserWithEmailAndPassword(tempAuth, email, values.password);
             const user = userCredential.user;
@@ -102,8 +101,8 @@ export default function CreateBranchForm() {
         } finally {
             setIsLoading(false);
              if (tempAuth) {
-                // Clean up the temporary auth instance if needed, though usually not required
-                // as it's scoped and doesn't interfere with the main auth instance.
+                // Since getAuth doesn't create a new app, we don't need to clean it up.
+                // The main auth instance used by the admin remains unaffected.
             }
         }
     }
