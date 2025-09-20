@@ -102,7 +102,6 @@ export default function BranchesPage() {
         if (!branchToDelete) return;
         
         try {
-            // This will delete the user's document from the 'users' collection in Firestore.
             await deleteDoc(doc(db, "users", branchToDelete.uid));
             
             toast({

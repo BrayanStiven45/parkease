@@ -69,6 +69,7 @@ export default function CreateBranchForm() {
 
             const userCredential = await createUserWithEmailAndPassword(tempAuth, email, values.password);
             const user = userCredential.user;
+            console.log(getAuth(mainApp))
 
             await setDoc(doc(db, "users", user.uid), {
                 uid: user.uid,
