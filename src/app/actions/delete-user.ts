@@ -1,7 +1,6 @@
 
 'use server';
 
-import 'dotenv/config';
 import * as admin from 'firebase-admin';
 import { adminApp } from '@/lib/firebase-admin';
 
