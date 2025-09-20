@@ -1,8 +1,7 @@
 
 'use server';
 
-import { getAuth } from 'firebase-admin/auth';
-import { getFirestore } from 'firebase-admin/firestore';
+import * as admin from 'firebase-admin';
 import { adminApp } from '@/lib/firebase-admin';
 
 // Define input and output types for clarity
@@ -22,8 +21,8 @@ export async function deleteUser(input: DeleteUserInput): Promise<DeleteUserOutp
   // before this function is ever called.
 
   const { uidToDelete } = input;
-  const adminAuth = getAuth(adminApp);
-  const adminDb = getFirestore(adminApp);
+  const adminAuth = admin.auth(adminApp);
+  const adminDb = admin.firestore(adminApp);
 
   try {
     // 1. Delete user from Firebase Authentication
