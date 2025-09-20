@@ -15,24 +15,26 @@ interface DeleteUserOutput {
 }
 
 export async function deleteUser(input: DeleteUserInput): Promise<DeleteUserOutput> {
-  // In a real-world scenario, you would add a check here to ensure
-  // that the currently logged-in user making this request is an admin.
-  // For this example, we assume the check is done on the client-side
-  // before this function is ever called.
-
   const { uidToDelete } = input;
-  const adminAuth = admin.auth(adminApp);
-  const adminDb = admin.firestore(adminApp);
+
+  // Ensure the admin app is initialized before using its services
+  if (!admin.apps.length) {
+    console.error('Firebase Admin SDK not initialized.');
+    return {
+      success: false,
+      message: 'Firebase Admin SDK not initialized.',
+    };
+  }
+  
+  const adminAuth = admin.auth();
+  const adminDb = admin.firestore();
 
   try {
-    // 1. Delete user from Firebase Authentication
+    // 1. Eliminar usuario en Authentication
     await adminAuth.deleteUser(uidToDelete);
 
-    // 2. Delete user document from Firestore
+    // 2. Eliminar usuario en Firestore
     await adminDb.collection('users').doc(uidToDelete).delete();
-
-    // Note: This does not delete subcollections like 'parkingRecords'.
-    // A more robust solution would involve a recursive delete function if needed.
 
     return {
       success: true,
