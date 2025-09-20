@@ -6,7 +6,7 @@ import { useRouter } from 'next/navigation';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { createUserWithEmailAndPassword, getAuth, browserLocalPersistence, type Auth } from 'firebase/auth';
+import { createUserWithEmailAndPassword, getAuth, type Auth } from 'firebase/auth';
 import { doc, setDoc } from 'firebase/firestore';
 import { db, app as mainApp } from '@/lib/firebase'; // Import mainApp
 import { Button } from '@/components/ui/button';
@@ -59,17 +59,12 @@ export default function CreateBranchForm() {
         const sanitizedName = sanitizeName(values.parkingLotName);
         const email = `${sanitizedName}@parkease.com`;
         
-        // Create a temporary, isolated Auth instance.
-        // This prevents the admin from being logged out.
         let tempAuth: Auth | null = null;
         try {
-            // Use getAuth on the main app instance. This doesn't re-initialize,
-            // but gets an auth instance tied to the app, which is what we need.
             tempAuth = getAuth(mainApp);
 
             const userCredential = await createUserWithEmailAndPassword(tempAuth, email, values.password);
             const user = userCredential.user;
-            console.log(getAuth(mainApp))
 
             await setDoc(doc(db, "users", user.uid), {
                 uid: user.uid,
@@ -91,20 +86,22 @@ export default function CreateBranchForm() {
             router.push('/dashboard/branches');
             
         } catch (error: any) {
-            console.error("Error during branch creation:", error);
-            toast({
-                variant: "destructive",
-                title: "Creation Failed",
-                description: error.code === 'auth/email-already-in-use'
-                    ? `The email ${email} is already in use. Please choose a different parking lot name.`
-                    : 'An unexpected error occurred.',
-            });
+            if (error.code === 'auth/email-already-in-use') {
+                toast({
+                    variant: "destructive",
+                    title: "Creation Failed",
+                    description: `The parking lot name "${values.parkingLotName}" results in an email (${email}) that is already in use. Please choose a different name.`,
+                });
+            } else {
+                console.error("Error during branch creation:", error);
+                toast({
+                    variant: "destructive",
+                    title: "Creation Failed",
+                    description: 'An unexpected error occurred. Please check the console for details.',
+                });
+            }
         } finally {
             setIsLoading(false);
-             if (tempAuth) {
-                // Since getAuth doesn't create a new app, we don't need to clean it up.
-                // The main auth instance used by the admin remains unaffected.
-            }
         }
     }
 
