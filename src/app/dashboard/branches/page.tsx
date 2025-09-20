@@ -22,6 +22,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
 import { useToast } from '@/hooks/use-toast';
+import { deleteUser } from '@/ai/flows/delete-user-flow';
 
 
 interface BranchInfo {
@@ -38,6 +39,7 @@ export default function BranchesPage() {
     const { toast } = useToast();
     const [branches, setBranches] = useState<BranchInfo[]>([]);
     const [isLoadingBranches, setIsLoadingBranches] = useState(true);
+    const [isDeleting, setIsDeleting] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [branchToDelete, setBranchToDelete] = useState<BranchInfo | null>(null);
 
@@ -99,24 +101,29 @@ export default function BranchesPage() {
     }, [isAdmin, user]);
 
     const handleDeleteBranch = async () => {
-        if (!branchToDelete) return;
+        if (!branchToDelete || !isAdmin) return;
+        setIsDeleting(true);
         
         try {
-            // This will delete the user's document from the 'users' collection in Firestore.
-            await deleteDoc(doc(db, "users", branchToDelete.uid));
+            const result = await deleteUser({ uidToDelete: branchToDelete.uid });
             
-            toast({
-                title: "Success",
-                description: `Branch "${branchToDelete.parkingLotName}" data has been deleted from Firestore.`,
-            });
-        } catch (e) {
-            console.error("Error deleting branch document: ", e);
+            if (result.success) {
+                toast({
+                    title: "Success",
+                    description: `Branch "${branchToDelete.parkingLotName}" and associated user have been deleted.`,
+                });
+            } else {
+                 throw new Error(result.message);
+            }
+        } catch (e: any) {
+            console.error("Error deleting branch: ", e);
             toast({
                 variant: "destructive",
                 title: "Error",
-                description: "Failed to delete the branch's database record.",
+                description: e.message || "Failed to delete the branch.",
             });
         } finally {
+            setIsDeleting(false);
             setBranchToDelete(null); // Close the dialog
         }
     };
@@ -208,15 +215,14 @@ export default function BranchesPage() {
                     <AlertDialogHeader>
                     <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
                     <AlertDialogDescription>
-                        This action will permanently delete the branch's data from Firestore. 
-                        This does NOT delete the user account from Firebase Authentication. 
-                        To fully remove the user, you must do so from the Firebase Console.
+                        This action will permanently delete the branch user from Firebase Authentication
+                        and their data from Firestore. This cannot be undone.
                     </AlertDialogDescription>
                     </AlertDialogHeader>
                     <AlertDialogFooter>
-                    <AlertDialogCancel>Cancel</AlertDialogCancel>
-                    <AlertDialogAction onClick={handleDeleteBranch}>
-                        Continue
+                    <AlertDialogCancel disabled={isDeleting}>Cancel</AlertDialogCancel>
+                    <AlertDialogAction onClick={handleDeleteBranch} disabled={isDeleting}>
+                        {isDeleting ? 'Deleting...' : 'Continue'}
                     </AlertDialogAction>
                     </AlertDialogFooter>
                 </AlertDialogContent>
