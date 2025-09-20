@@ -2,14 +2,27 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { collection, getDocs, query, onSnapshot, where } from 'firebase/firestore';
-import { User as LucideUser, DollarSign, ParkingCircle } from 'lucide-react';
-
+import { collection, getDocs, query, onSnapshot, where, doc, deleteDoc } from 'firebase/firestore';
+import { User as LucideUser, DollarSign, ParkingCircle, MoreVertical, PlusCircle, Trash2, Eye } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { useAuth } from '@/contexts/auth-context';
 import { db } from '@/lib/firebase';
 import { Terminal } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog"
+import { useToast } from '@/hooks/use-toast';
+
 
 interface BranchInfo {
     uid: string;
@@ -22,9 +35,12 @@ interface BranchInfo {
 export default function BranchesPage() {
     const { user, isAdmin, loading } = useAuth();
     const router = useRouter();
+    const { toast } = useToast();
     const [branches, setBranches] = useState<BranchInfo[]>([]);
     const [isLoadingBranches, setIsLoadingBranches] = useState(true);
     const [error, setError] = useState<string | null>(null);
+    const [branchToDelete, setBranchToDelete] = useState<BranchInfo | null>(null);
+
 
     useEffect(() => {
         if (!loading && !isAdmin) {
@@ -38,7 +54,6 @@ export default function BranchesPage() {
             setError(null);
             
             const usersCollection = collection(db, 'users');
-            // Query all users except the admin
             const q = query(usersCollection, where('email', '!=', user.email));
 
             const unsubscribe = onSnapshot(q, (usersSnapshot) => {
@@ -47,20 +62,17 @@ export default function BranchesPage() {
                     const userId = doc.id;
                     
                     const parkingRecordsRef = collection(db, 'users', userId, 'parkingRecords');
-
-                    // Get occupied spots
                     const parkedQuery = query(parkingRecordsRef, where('status', '==', 'parked'));
                     const parkedSnapshot = await getDocs(parkedQuery);
                     const occupiedSpots = parkedSnapshot.size;
 
-                    // Get total revenue
                     const completedQuery = query(parkingRecordsRef, where('status', '==', 'completed'));
                     const completedSnapshot = await getDocs(completedQuery);
                     const revenue = completedSnapshot.docs.reduce((acc, doc) => acc + (doc.data().totalCost || 0), 0);
 
                     return {
                         uid: userId,
-                        parkingLotName: userData.parkingLotName || userData.email, // Fallback to email
+                        parkingLotName: userData.parkingLotName || userData.email,
                         occupiedSpots,
                         maxCapacity: userData.maxCapacity || 0,
                         revenue,
@@ -86,6 +98,35 @@ export default function BranchesPage() {
         }
     }, [isAdmin, user]);
 
+    const handleDeleteBranch = async () => {
+        if (!branchToDelete) return;
+        
+        try {
+            // NOTE: This only deletes the Firestore user document.
+            // A complete solution would require a Firebase Function to delete
+            // the user from Firebase Auth and all their subcollections.
+            await deleteDoc(doc(db, "users", branchToDelete.uid));
+            
+            toast({
+                title: "Success",
+                description: `Branch "${branchToDelete.parkingLotName}" has been deleted.`,
+            });
+            setBranchToDelete(null); // Close the dialog
+        } catch (e) {
+            console.error("Error deleting branch: ", e);
+            toast({
+                variant: "destructive",
+                title: "Error",
+                description: "Failed to delete the branch.",
+            });
+            setBranchToDelete(null);
+        }
+    };
+
+    const handleViewDetails = (branchId: string) => {
+        router.push(`/dashboard/branches/${branchId}`);
+    };
+
     if (loading || isLoadingBranches) {
         return <div className="text-center">Loading...</div>;
     }
@@ -94,13 +135,15 @@ export default function BranchesPage() {
         return null;
     }
 
-    const handleBranchClick = (branchId: string) => {
-        router.push(`/dashboard/branches/${branchId}`);
-    };
-
     return (
         <div className="space-y-6">
-            <h1 className="text-3xl font-bold">Gestión de Sucursales</h1>
+            <div className="flex justify-between items-center">
+                <h1 className="text-3xl font-bold">Gestión de Sucursales</h1>
+                <Button onClick={() => router.push('/dashboard/branches/new')}>
+                    <PlusCircle className="mr-2 h-4 w-4" />
+                    Crear Nueva Sucursal
+                </Button>
+            </div>
              {error && (
                 <Alert variant="destructive">
                     <Terminal className="h-4 w-4" />
@@ -111,12 +154,29 @@ export default function BranchesPage() {
             <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
                 {branches.length > 0 ? (
                     branches.map(branch => (
-                        <Card key={branch.uid} className="cursor-pointer hover:shadow-lg transition-shadow" onClick={() => handleBranchClick(branch.uid)}>
-                            <CardHeader>
+                        <Card key={branch.uid}>
+                            <CardHeader className="flex flex-row items-start justify-between">
                                 <CardTitle className="flex items-center gap-2">
                                     <LucideUser className="h-5 w-5" />
                                     {branch.parkingLotName}
                                 </CardTitle>
+                                <DropdownMenu>
+                                    <DropdownMenuTrigger asChild>
+                                        <Button variant="ghost" size="icon" className="h-8 w-8">
+                                            <MoreVertical className="h-4 w-4" />
+                                        </Button>
+                                    </DropdownMenuTrigger>
+                                    <DropdownMenuContent align="end">
+                                        <DropdownMenuItem onClick={() => handleViewDetails(branch.uid)}>
+                                            <Eye className="mr-2 h-4 w-4" />
+                                            Ver Detalles
+                                        </DropdownMenuItem>
+                                        <DropdownMenuItem onClick={() => setBranchToDelete(branch)} className="text-destructive">
+                                            <Trash2 className="mr-2 h-4 w-4" />
+                                            Eliminar
+                                        </DropdownMenuItem>
+                                    </DropdownMenuContent>
+                                </DropdownMenu>
                             </CardHeader>
                             <CardContent className="space-y-4">
                                <div className="flex items-center justify-between p-3 bg-muted/50 rounded-lg">
@@ -144,6 +204,23 @@ export default function BranchesPage() {
                     )
                 )}
             </div>
+            <AlertDialog open={!!branchToDelete} onOpenChange={(isOpen) => !isOpen && setBranchToDelete(null)}>
+                <AlertDialogContent>
+                    <AlertDialogHeader>
+                    <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                    <AlertDialogDescription>
+                        This action cannot be undone. This will permanently delete the branch
+                        and all its associated data. To delete the user from Authentication, you must use a Firebase Function.
+                    </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                    <AlertDialogAction onClick={handleDeleteBranch}>
+                        Continue
+                    </AlertDialogAction>
+                    </AlertDialogFooter>
+                </AlertDialogContent>
+            </AlertDialog>
         </div>
     );
 }

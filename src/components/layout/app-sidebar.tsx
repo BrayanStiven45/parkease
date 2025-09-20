@@ -12,21 +12,27 @@ import {
 import { Bot, Building, Car, History, LayoutDashboard } from 'lucide-react';
 import { useAuth } from '@/contexts/auth-context';
 
-const menuItems = [
-  { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
-  { href: '/dashboard/history', label: 'Parking History', icon: History },
-  { href: '/dashboard/rate-suggester', label: 'AI Rate Suggester', icon: Bot },
-];
-
-const adminMenuItems = [
-    { href: '/dashboard/branches', label: 'Branches', icon: Building },
+const allMenuItems = [
+  { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard, adminOnly: false },
+  { href: '/dashboard/history', label: 'Parking History', icon: History, adminOnly: false },
+  { href: '/dashboard/branches', label: 'Branches', icon: Building, adminOnly: true },
+  { href: '/dashboard/rate-suggester', label: 'AI Rate Suggester', icon: Bot, adminOnly: false },
 ];
 
 export default function AppSidebar() {
   const pathname = usePathname();
   const { isAdmin } = useAuth();
 
-  const allMenuItems = isAdmin ? [...menuItems, ...adminMenuItems] : menuItems;
+  const getFilteredMenuItems = () => {
+    if (isAdmin) {
+      // Admin sees Branches and AI Suggester
+      return allMenuItems.filter(item => item.adminOnly || item.href === '/dashboard/rate-suggester');
+    }
+    // Regular users see everything except admin-only items
+    return allMenuItems.filter(item => !item.adminOnly);
+  };
+
+  const menuItems = getFilteredMenuItems();
 
   return (
     <Sidebar collapsible="icon">
@@ -38,11 +44,11 @@ export default function AppSidebar() {
       </SidebarHeader>
       <SidebarContent>
         <SidebarMenu>
-          {allMenuItems.map((item) => (
+          {menuItems.map((item) => (
             <SidebarMenuItem key={item.href}>
               <SidebarMenuButton
                 asChild
-                isActive={pathname === item.href}
+                isActive={pathname.startsWith(item.href) && (item.href !== '/dashboard' || pathname === '/dashboard')}
                 tooltip={item.label}
               >
                 <Link href={item.href}>
