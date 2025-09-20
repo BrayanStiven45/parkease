@@ -1,16 +1,16 @@
+
 'use client';
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { collection, getDocs, query, onSnapshot, where, doc, deleteDoc } from 'firebase/firestore';
-import { User as LucideUser, DollarSign, ParkingCircle, MoreVertical, PlusCircle, Trash2, Eye } from 'lucide-react';
+import { User as LucideUser, DollarSign, ParkingCircle, PlusCircle, Trash2 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { useAuth } from '@/contexts/auth-context';
 import { db } from '@/lib/firebase';
 import { Terminal } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -154,29 +154,16 @@ export default function BranchesPage() {
             <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
                 {branches.length > 0 ? (
                     branches.map(branch => (
-                        <Card key={branch.uid}>
-                            <CardHeader className="flex flex-row items-start justify-between">
+                        <Card 
+                            key={branch.uid} 
+                            onClick={() => handleViewDetails(branch.uid)}
+                            className="cursor-pointer hover:border-primary transition-all relative"
+                        >
+                            <CardHeader>
                                 <CardTitle className="flex items-center gap-2">
                                     <LucideUser className="h-5 w-5" />
                                     {branch.parkingLotName}
                                 </CardTitle>
-                                <DropdownMenu>
-                                    <DropdownMenuTrigger asChild>
-                                        <Button variant="ghost" size="icon" className="h-8 w-8">
-                                            <MoreVertical className="h-4 w-4" />
-                                        </Button>
-                                    </DropdownMenuTrigger>
-                                    <DropdownMenuContent align="end">
-                                        <DropdownMenuItem onClick={() => handleViewDetails(branch.uid)}>
-                                            <Eye className="mr-2 h-4 w-4" />
-                                            Ver Detalles
-                                        </DropdownMenuItem>
-                                        <DropdownMenuItem onClick={() => setBranchToDelete(branch)} className="text-destructive">
-                                            <Trash2 className="mr-2 h-4 w-4" />
-                                            Eliminar
-                                        </DropdownMenuItem>
-                                    </DropdownMenuContent>
-                                </DropdownMenu>
                             </CardHeader>
                             <CardContent className="space-y-4">
                                <div className="flex items-center justify-between p-3 bg-muted/50 rounded-lg">
@@ -190,6 +177,20 @@ export default function BranchesPage() {
                                         <p className="text-sm text-muted-foreground flex items-center gap-1"><ParkingCircle className="h-4 w-4" /> Ocupación</p>
                                         <p className="text-xl font-bold">{branch.occupiedSpots} / {branch.maxCapacity}</p>
                                     </div>
+                                </div>
+                                <div className="absolute bottom-2 right-2">
+                                    <Button 
+                                        variant="ghost" 
+                                        size="icon" 
+                                        onClick={(e) => {
+                                            e.stopPropagation(); // Evita que el click se propague a la tarjeta
+                                            setBranchToDelete(branch);
+                                        }}
+                                        className="text-muted-foreground hover:text-destructive"
+                                        aria-label="Delete branch"
+                                    >
+                                        <Trash2 className="h-5 w-5" />
+                                    </Button>
                                 </div>
                             </CardContent>
                         </Card>
