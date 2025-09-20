@@ -3,7 +3,7 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { collection, getDocs, query, onSnapshot, where, doc, deleteDoc } from 'firebase/firestore';
+import { collection, getDocs, query, onSnapshot, where } from 'firebase/firestore';
 import { User as LucideUser, DollarSign, ParkingCircle, PlusCircle, Trash2 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
@@ -22,7 +22,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
 import { useToast } from '@/hooks/use-toast';
-import { deleteUser } from '@/ai/flows/delete-user-flow';
+import { deleteUser } from '@/app/actions/delete-user';
 
 
 interface BranchInfo {
