@@ -102,14 +102,13 @@ export default function BranchesPage() {
         if (!branchToDelete) return;
         
         try {
-            // Step 1: Delete the user's document from Firestore. This is a safe client-side operation.
+            // This will delete the user's document from the 'users' collection in Firestore.
             await deleteDoc(doc(db, "users", branchToDelete.uid));
             
             toast({
                 title: "Success",
-                description: `Branch "${branchToDelete.parkingLotName}" has been deleted from the database.`,
+                description: `Branch "${branchToDelete.parkingLotName}" data has been deleted from Firestore.`,
             });
-            setBranchToDelete(null); // Close the dialog
         } catch (e) {
             console.error("Error deleting branch document: ", e);
             toast({
@@ -117,7 +116,8 @@ export default function BranchesPage() {
                 title: "Error",
                 description: "Failed to delete the branch's database record.",
             });
-            setBranchToDelete(null);
+        } finally {
+            setBranchToDelete(null); // Close the dialog
         }
     };
 
@@ -210,7 +210,7 @@ export default function BranchesPage() {
                     <AlertDialogDescription>
                         This action will permanently delete the branch's data from Firestore. 
                         This does NOT delete the user account from Firebase Authentication. 
-                        To fully remove the user, you must do so from the Firebase Console or with a server-side function.
+                        To fully remove the user, you must do so from the Firebase Console.
                     </AlertDialogDescription>
                     </AlertDialogHeader>
                     <AlertDialogFooter>
