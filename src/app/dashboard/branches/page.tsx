@@ -186,7 +186,7 @@ export default function BranchesPage() {
                                             e.stopPropagation(); // Evita que el click se propague a la tarjeta
                                             setBranchToDelete(branch);
                                         }}
-                                        className="text-muted-foreground hover:text-destructive"
+                                        className="text-destructive hover:bg-destructive/10"
                                         aria-label="Delete branch"
                                     >
                                         <Trash2 className="h-5 w-5" />
