@@ -10,7 +10,7 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
         <AppSidebar />
         <main className="flex-1 flex flex-col">
           <AppHeader />
-          <div className="flex-1 py-4 sm:py-6 lg:py-8 bg-background">
+          <div className="flex-1 p-4 sm:p-6 lg:p-8 bg-card">
             {children}
           </div>
         </main>

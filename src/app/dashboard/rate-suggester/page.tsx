@@ -20,7 +20,7 @@ export default function RateSuggesterPage() {
     }
 
     return (
-        <div className="max-w-2xl mx-auto space-y-6">
+        <div className="w-full space-y-6">
             <Card>
                 <CardHeader>
                     <CardTitle>AI-Powered Rate Suggester</CardTitle>
