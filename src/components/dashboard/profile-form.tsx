@@ -102,7 +102,7 @@ export default function ProfileForm() {
                                 <FormItem><FormLabel>Capacidad Máxima de Vehículos</FormLabel><FormControl><Input type="number" {...field} /></FormControl><FormMessage /></FormItem>
                             )} />
                             <FormField control={form.control} name="hourlyCost" render={({ field }) => (
-                                <FormItem><FormLabel>Costo por Hora</FormLabel><FormControl><Input type="number" step="0.01" {...field} /></FormControl><FormMessage /></FormItem>
+                                <FormItem><FormLabel>Costo por Hora</FormLabel><FormControl><Input type="number" step="50" {...field} /></FormControl><FormMessage /></FormItem>
                             )} />
                             <FormField control={form.control} name="address" render={({ field }) => (
                                 <FormItem><FormLabel>Dirección</FormLabel><FormControl><Input placeholder="Ej., Av. Principal 123" {...field} /></FormControl><FormMessage /></FormItem>
