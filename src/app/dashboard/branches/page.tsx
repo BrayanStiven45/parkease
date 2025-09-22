@@ -1,9 +1,9 @@
 
 'use client';
 
-import { useEffect, useState, useMemo } from 'react';
+import { useEffect, useState, useMemo, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
-import { collection, getDocs, query, onSnapshot, where, deleteDoc, doc } from 'firebase/firestore';
+import { collection, getDocs, query, where } from 'firebase/firestore';
 import { User as LucideUser, DollarSign, ParkingCircle, PlusCircle, Trash2, Search } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
@@ -52,55 +52,57 @@ export default function BranchesPage() {
         }
     }, [isAdmin, loading, router]);
 
-    useEffect(() => {
-        if (isAdmin && user) {
-            setIsLoadingBranches(true);
-            setError(null);
-            
+    const fetchBranchesData = useCallback(async () => {
+        if (!isAdmin || !user) return;
+
+        setIsLoadingBranches(true);
+        setError(null);
+        
+        try {
             const usersCollection = collection(db, 'users');
             const q = query(usersCollection, where('email', '!=', user.email));
+            const usersSnapshot = await getDocs(q);
 
-            const unsubscribe = onSnapshot(q, (usersSnapshot) => {
-                const promises = usersSnapshot.docs.map(async (doc) => {
-                    const userData = doc.data();
-                    const userId = doc.id;
-                    
-                    const parkingRecordsRef = collection(db, 'users', userId, 'parkingRecords');
-                    const parkedQuery = query(parkingRecordsRef, where('status', '==', 'parked'));
-                    const parkedSnapshot = await getDocs(parkedQuery);
-                    const occupiedSpots = parkedSnapshot.size;
+            const promises = usersSnapshot.docs.map(async (doc) => {
+                const userData = doc.data();
+                const userId = doc.id;
+                
+                const parkingRecordsRef = collection(db, 'users', userId, 'parkingRecords');
+                
+                const parkedQuery = query(parkingRecordsRef, where('status', '==', 'parked'));
+                const completedQuery = query(parkingRecordsRef, where('status', '==', 'completed'));
 
-                    const completedQuery = query(parkingRecordsRef, where('status', '==', 'completed'));
-                    const completedSnapshot = await getDocs(completedQuery);
-                    const revenue = completedSnapshot.docs.reduce((acc, doc) => acc + (doc.data().totalCost || 0), 0);
+                const [parkedSnapshot, completedSnapshot] = await Promise.all([
+                    getDocs(parkedQuery),
+                    getDocs(completedQuery)
+                ]);
 
-                    return {
-                        uid: userId,
-                        parkingLotName: userData.parkingLotName || userData.email,
-                        occupiedSpots,
-                        maxCapacity: userData.maxCapacity || 0,
-                        revenue,
-                    };
-                });
+                const occupiedSpots = parkedSnapshot.size;
+                const revenue = completedSnapshot.docs.reduce((acc, doc) => acc + (doc.data().totalCost || 0), 0);
 
-                Promise.all(promises).then(usersList => {
-                    setBranches(usersList);
-                    setIsLoadingBranches(false);
-                }).catch(e => {
-                     console.error("Error fetching branch details:", e);
-                     setError("No se pudieron cargar los detalles de la sucursal.");
-                     setIsLoadingBranches(false);
-                });
-
-            }, (e) => {
-                console.error("Error fetching branches:", e);
-                setError("No se pudieron cargar las sucursales. Revisa la consola para más detalles.");
-                setIsLoadingBranches(false);
+                return {
+                    uid: userId,
+                    parkingLotName: userData.parkingLotName || userData.email,
+                    occupiedSpots,
+                    maxCapacity: userData.maxCapacity || 0,
+                    revenue,
+                };
             });
 
-            return () => unsubscribe();
+            const usersList = await Promise.all(promises);
+            setBranches(usersList);
+        } catch (e) {
+            console.error("Error fetching branches:", e);
+            setError("No se pudieron cargar las sucursales. Revisa la consola para más detalles.");
+        } finally {
+            setIsLoadingBranches(false);
         }
     }, [isAdmin, user]);
+
+    useEffect(() => {
+        fetchBranchesData();
+    }, [fetchBranchesData]);
+
 
     const filteredBranches = useMemo(() => {
         if (!searchQuery) {
@@ -122,6 +124,9 @@ export default function BranchesPage() {
                 title: "Éxito",
                 description: `La sucursal "${branchToDelete.parkingLotName}" ha sido eliminada completamente.`,
             });
+
+            // Refetch data after deletion
+            fetchBranchesData();
             
         } catch (e: any) {
             console.error("Error deleting branch: ", e);
