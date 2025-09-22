@@ -30,42 +30,47 @@ export default function HistoryPage() {
         if (!isAdmin) return;
         setIsLoadingData(true);
 
-        // 1. Get all branch users to map UID to parking lot name
         const usersQuery = query(collection(db, 'users'), where('email', '!=', 'admin@parkease.com'));
         const usersSnapshot = await getDocs(usersQuery);
-        const branchesMap = new Map<string, string>();
-        usersSnapshot.forEach(doc => {
-            branchesMap.set(doc.id, doc.data().parkingLotName || doc.data().email);
-        });
 
-        // 2. Use a collectionGroup query to get all completed records from all branches
-        const recordsQuery = query(collectionGroup(db, 'parkingRecords'), where('status', '==', 'completed'));
-        
-        const unsubscribe = onSnapshot(recordsQuery, (snapshot) => {
-            const fetchedRecords = snapshot.docs.map(doc => {
+        const allRecordsPromises = usersSnapshot.docs.map(async (userDoc) => {
+            const branchData = userDoc.data();
+            const branchId = userDoc.id;
+            const parkingRecordsRef = collection(db, 'users', branchId, 'parkingRecords');
+            const recordsQuery = query(parkingRecordsRef, where('status', '==', 'completed'));
+            const recordsSnapshot = await getDocs(recordsQuery);
+
+            return recordsSnapshot.docs.map(doc => {
                 const data = doc.data();
-                const userId = doc.ref.parent.parent?.id; // Get the user ID from the path
                 return {
                     id: doc.id,
                     ...data,
                     entryTime: (data.entryTime as Timestamp)?.toDate().toISOString(),
                     exitTime: (data.exitTime as Timestamp)?.toDate().toISOString(),
-                    parkingLotName: userId ? branchesMap.get(userId) : 'Sucursal Desconocida',
+                    parkingLotName: branchData.parkingLotName || branchData.email,
                 } as ParkingRecord;
             });
+        });
+
+        try {
+            const allRecordsArrays = await Promise.all(allRecordsPromises);
+            const fetchedRecords = allRecordsArrays.flat(); // Combine all records into one array
 
             fetchedRecords.sort((a, b) => 
                 new Date(b.exitTime ?? 0).getTime() - new Date(a.exitTime ?? 0).getTime()
             );
 
             setHistoryRecords(fetchedRecords);
-            setIsLoadingData(false);
-        }, (error) => {
+        } catch (error) {
             console.error("Error fetching admin history records: ", error);
+        } finally {
             setIsLoadingData(false);
-        });
+        }
 
-        return unsubscribe;
+        // We return an empty unsubscribe function because this new approach
+        // doesn't use onSnapshot for real-time updates to simplify the logic
+        // and avoid managing multiple listeners. The data is fetched once.
+        return () => {};
 
     }, [isAdmin]);
 
