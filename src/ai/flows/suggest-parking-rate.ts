@@ -1,67 +1,64 @@
-// A parking rate suggestion AI agent.
-//
-//  - suggestParkingRate - A function that suggests a parking rate.
-//  - SuggestParkingRateInput - The input type for the suggestParkingRate function.
-//  - SuggestParkingRateOutput - The return type for the suggestParkingRate function.
+'use client';
+import { usePathname } from 'next/navigation';
+import Link from 'next/link';
+import {
+  Sidebar,
+  SidebarContent,
+  SidebarHeader,
+  SidebarMenu,
+  SidebarMenuButton,
+  SidebarMenuItem,
+} from '@/components/ui/sidebar';
+import { Bot, Building, Car, History, LayoutDashboard } from 'lucide-react';
+import { useAuth } from '@/contexts/auth-context';
 
-'use server';
+const allMenuItems = [
+  { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard, adminOnly: false },
+  { href: '/dashboard/history', label: 'Historial de Estacionamiento', icon: History, adminOnly: false },
+  { href: '/dashboard/branches', label: 'Sucursales', icon: Building, adminOnly: true },
+];
 
-import {ai} from '@/ai/genkit';
-import {z} from 'genkit';
+export default function AppSidebar() {
+  const pathname = usePathname();
+  const { isAdmin } = useAuth();
 
-const SuggestParkingRateInputSchema = z.object({
-  entryTime: z.string().describe('The entry time of the vehicle as an ISO string.'),
-  durationHours: z
-    .number()
-    .describe('The duration of parking in hours, can be a decimal.'),
-  historicalData: z
-    .string()
-    .describe(
-      'Historical parking data, including dates, times, durations, and prices.'
-    ),
-});
-export type SuggestParkingRateInput = z.infer<typeof SuggestParkingRateInputSchema>;
+  const getFilteredMenuItems = () => {
+    if (isAdmin) {
+      // Admin sees Branches and AI Suggester
+      return allMenuItems.filter(item => item.adminOnly || item.href === '/dashboard/history' || item.href === '/dashboard');
+    }
+    // Regular users see everything except admin-only items
+    return allMenuItems.filter(item => !item.adminOnly);
+  };
 
-const SuggestParkingRateOutputSchema = z.object({
-  suggestedRate: z
-    .number()
-    .describe('The suggested parking rate based on the input data.'),
-  reasoning: z
-    .string()
-    .describe('The reasoning behind the suggested rate, explaining the factors considered.'),
-});
-export type SuggestParkingRateOutput = z.infer<typeof SuggestParkingRateOutputSchema>;
+  const menuItems = getFilteredMenuItems();
 
-export async function suggestParkingRate(input: SuggestParkingRateInput): Promise<SuggestParkingRateOutput> {
-  return suggestParkingRateFlow(input);
+  return (
+    <Sidebar collapsible="icon">
+      <SidebarHeader>
+        <div className="flex items-center gap-2 p-2">
+          <Car className="h-8 w-8 text-primary-foreground" />
+          <span className="text-lg font-semibold text-primary-foreground font-headline">ParkEase</span>
+        </div>
+      </SidebarHeader>
+      <SidebarContent>
+        <SidebarMenu>
+          {menuItems.map((item) => (
+            <SidebarMenuItem key={item.href}>
+              <SidebarMenuButton
+                asChild
+                isActive={pathname.startsWith(item.href) && (item.href !== '/dashboard' || pathname === '/dashboard')}
+                tooltip={item.label}
+              >
+                <Link href={item.href}>
+                  <item.icon />
+                  <span>{item.label}</span>
+                </Link>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+          ))}
+        </SidebarMenu>
+      </SidebarContent>
+    </Sidebar>
+  );
 }
-
-const prompt = ai.definePrompt({
-  name: 'suggestParkingRatePrompt',
-  input: {schema: SuggestParkingRateInputSchema},
-  output: {schema: SuggestParkingRateOutputSchema},
-  prompt: `You are an expert parking rate strategist. You analyze parking data and suggest optimal rates. 
-
-  Consider the entry time, duration, and historical data to suggest a rate that maximizes revenue while efficiently managing parking space demand. 
-
-  Entry Time: {{{entryTime}}}
-  Duration (Hours): {{{durationHours}}}
-  Historical Data: {{{historicalData}}}
-
-  Provide the suggested rate and a brief explanation of your reasoning.
-
-  Ensure the suggestedRate field is a number.
-  `,
-});
-
-const suggestParkingRateFlow = ai.defineFlow(
-  {
-    name: 'suggestParkingRateFlow',
-    inputSchema: SuggestParkingRateInputSchema,
-    outputSchema: SuggestParkingRateOutputSchema,
-  },
-  async input => {
-    const {output} = await prompt(input);
-    return output!;
-  }
-);

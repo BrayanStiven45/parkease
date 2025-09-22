@@ -1,35 +1,64 @@
 'use client';
-import RateSuggesterForm from "@/components/rate-suggester/rate-suggester-form";
-import { Card, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { useAuth } from "@/contexts/auth-context";
-import { useRouter } from "next/navigation";
-import { useEffect } from "react";
+import { usePathname } from 'next/navigation';
+import Link from 'next/link';
+import {
+  Sidebar,
+  SidebarContent,
+  SidebarHeader,
+  SidebarMenu,
+  SidebarMenuButton,
+  SidebarMenuItem,
+} from '@/components/ui/sidebar';
+import { Bot, Building, Car, History, LayoutDashboard } from 'lucide-react';
+import { useAuth } from '@/contexts/auth-context';
 
-export default function RateSuggesterPage() {
-    const { user, loading } = useAuth();
-    const router = useRouter();
+const allMenuItems = [
+  { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard, adminOnly: false },
+  { href: '/dashboard/history', label: 'Historial de Estacionamiento', icon: History, adminOnly: false },
+  { href: '/dashboard/branches', label: 'Sucursales', icon: Building, adminOnly: true },
+];
 
-    useEffect(() => {
-        if (!loading && !user) {
-            router.push('/');
-        }
-    }, [user, loading, router]);
+export default function AppSidebar() {
+  const pathname = usePathname();
+  const { isAdmin } = useAuth();
 
-    if (loading || !user) {
-        return <div className="text-center">Cargando...</div>;
+  const getFilteredMenuItems = () => {
+    if (isAdmin) {
+      // Admin sees Branches and AI Suggester
+      return allMenuItems.filter(item => item.adminOnly || item.href === '/dashboard/history' || item.href === '/dashboard');
     }
+    // Regular users see everything except admin-only items
+    return allMenuItems.filter(item => !item.adminOnly);
+  };
 
-    return (
-        <div className="w-full space-y-6">
-            <Card>
-                <CardHeader>
-                    <CardTitle>Sugeridor de Tarifas con IA</CardTitle>
-                    <CardDescription>
-                        Usa nuestra herramienta de IA para obtener sugerencias de precios óptimos basados en la hora de entrada, duración y patrones históricos.
-                    </CardDescription>
-                </CardHeader>
-            </Card>
-            <RateSuggesterForm />
+  const menuItems = getFilteredMenuItems();
+
+  return (
+    <Sidebar collapsible="icon">
+      <SidebarHeader>
+        <div className="flex items-center gap-2 p-2">
+          <Car className="h-8 w-8 text-primary-foreground" />
+          <span className="text-lg font-semibold text-primary-foreground font-headline">ParkEase</span>
         </div>
-    );
+      </SidebarHeader>
+      <SidebarContent>
+        <SidebarMenu>
+          {menuItems.map((item) => (
+            <SidebarMenuItem key={item.href}>
+              <SidebarMenuButton
+                asChild
+                isActive={pathname.startsWith(item.href) && (item.href !== '/dashboard' || pathname === '/dashboard')}
+                tooltip={item.label}
+              >
+                <Link href={item.href}>
+                  <item.icon />
+                  <span>{item.label}</span>
+                </Link>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+          ))}
+        </SidebarMenu>
+      </SidebarContent>
+    </Sidebar>
+  );
 }
