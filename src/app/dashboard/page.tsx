@@ -80,14 +80,12 @@ export default function DashboardPage() {
 
     if (isAdmin) {
         return (
-            <div className="flex flex-col items-center justify-center h-full text-center">
-                <Card className="p-8 md:p-12">
-                    <CardContent className="flex flex-col items-center gap-4">
-                        <Car className="h-16 w-16 text-primary" />
-                        <h1 className="text-4xl font-bold font-headline">Bienvenido a ParkEase</h1>
-                        <p className="text-lg text-muted-foreground">Panel de Administración</p>
-                    </CardContent>
-                </Card>
+            <div className="flex flex-col items-center justify-center h-full w-full bg-card text-center -m-4 sm:-m-6 lg:-m-8">
+                <div className="flex flex-col items-center gap-4 p-8">
+                    <Car className="h-16 w-16 text-primary" />
+                    <h1 className="text-4xl font-bold font-headline">Bienvenido a ParkEase</h1>
+                    <p className="text-lg text-muted-foreground">Panel de Administración</p>
+                </div>
             </div>
         )
     }
@@ -135,4 +133,3 @@ export default function DashboardPage() {
     </div>
   );
 }
-
