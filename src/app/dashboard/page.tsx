@@ -1,3 +1,4 @@
+
 "use client";
 
 import { Car, Clock } from 'lucide-react';
@@ -12,7 +13,7 @@ import { differenceInMinutes } from 'date-fns';
 import type { Timestamp } from 'firebase/firestore';
 
 export default function DashboardPage() {
-    const { user, userData, loading } = useAuth();
+    const { user, userData, loading, isAdmin } = useAuth();
     const router = useRouter();
     const [totalParked, setTotalParked] = useState(0);
     const [avgTime, setAvgTime] = useState("0h 0m");
@@ -25,7 +26,7 @@ export default function DashboardPage() {
     }, [user, loading, router]);
 
     useEffect(() => {
-        if (!user) return;
+        if (!user || isAdmin) return;
 
         const parkingRecordsCollection = collection(db, 'users', user.uid, 'parkingRecords');
         const q = query(parkingRecordsCollection, where('status', '==', 'parked'));
@@ -45,9 +46,11 @@ export default function DashboardPage() {
         });
 
         return () => unsubscribe();
-    }, [user]);
+    }, [user, isAdmin]);
 
     useEffect(() => {
+        if (isAdmin) return;
+
         const calculateAvgTime = () => {
             if (entryTimes.length > 0) {
                 const now = new Date();
@@ -64,15 +67,29 @@ export default function DashboardPage() {
             }
         };
 
-        calculateAvgTime(); // Calculate once initially
+        calculateAvgTime();
 
-        const intervalId = setInterval(calculateAvgTime, 1000); // Recalculate every second
+        const intervalId = setInterval(calculateAvgTime, 1000);
 
         return () => clearInterval(intervalId);
-    }, [entryTimes]);
+    }, [entryTimes, isAdmin]);
 
     if (loading || !user) {
         return <div className="text-center">Cargando...</div>;
+    }
+
+    if (isAdmin) {
+        return (
+            <div className="flex flex-col items-center justify-center h-full text-center">
+                <Card className="p-8 md:p-12">
+                    <CardContent className="flex flex-col items-center gap-4">
+                        <Car className="h-16 w-16 text-primary" />
+                        <h1 className="text-4xl font-bold font-headline">Bienvenido a ParkEase</h1>
+                        <p className="text-lg text-muted-foreground">Panel de Administración</p>
+                    </CardContent>
+                </Card>
+            </div>
+        )
     }
 
   return (
@@ -118,3 +135,4 @@ export default function DashboardPage() {
     </div>
   );
 }
+
