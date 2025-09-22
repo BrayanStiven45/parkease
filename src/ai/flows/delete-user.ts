@@ -10,15 +10,23 @@
 
 import { ai } from '@/ai/genkit';
 import { z } from 'genkit';
-import * as admin from 'firebase-admin';
+import { getApps, initializeApp, cert } from 'firebase-admin/app';
+import { getAuth } from 'firebase-admin/auth';
+import { getFirestore } from 'firebase-admin/firestore';
 
-// Initialize Firebase Admin SDK if not already initialized
-if (!admin.apps.length) {
-  admin.initializeApp();
+// Initialize Firebase Admin SDK only once
+if (!getApps().length) {
+  initializeApp({
+    credential: cert({
+      projectId: process.env.FIREBASE_PROJECT_ID,
+      clientEmail: process.env.FIREBASE_CLIENT_EMAIL,
+      privateKey: (process.env.FIREBASE_PRIVATE_KEY || '').replace(/\\n/g, '\n'),
+    }),
+  });
 }
 
-const db = admin.firestore();
-const auth = admin.auth();
+const db = getFirestore();
+const auth = getAuth();
 
 const DeleteUserInputSchema = z.object({
   uid: z.string().describe('The UID of the user to delete.'),
@@ -51,18 +59,13 @@ const deleteUserFlow = ai.defineFlow(
       // 2. Delete user data from Firestore
       const userDocRef = db.collection('users').doc(uid);
       await userDocRef.delete();
-
-      // Note: This does not delete subcollections like parkingRecords. 
-      // For a full cleanup, a more complex recursive delete function would be needed,
-      // but for this app's purpose, deleting the user document is sufficient.
-
+      
       return {
         success: true,
         message: `Successfully deleted user ${uid} from Authentication and Firestore.`,
       };
     } catch (error: any) {
       console.error(`Failed to delete user ${uid}:`, error);
-      // Throw an error to be caught by the client-side caller
       throw new Error(`Failed to delete user: ${error.message}`);
     }
   }
