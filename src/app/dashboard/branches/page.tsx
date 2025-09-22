@@ -1,10 +1,10 @@
 
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import { collection, getDocs, query, onSnapshot, where, deleteDoc, doc } from 'firebase/firestore';
-import { User as LucideUser, DollarSign, ParkingCircle, PlusCircle, Trash2 } from 'lucide-react';
+import { User as LucideUser, DollarSign, ParkingCircle, PlusCircle, Trash2, Search } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { useAuth } from '@/contexts/auth-context';
@@ -22,6 +22,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
 import { useToast } from '@/hooks/use-toast';
+import { Input } from '@/components/ui/input';
 
 
 interface BranchInfo {
@@ -41,6 +42,7 @@ export default function BranchesPage() {
     const [isDeleting, setIsDeleting] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [branchToDelete, setBranchToDelete] = useState<BranchInfo | null>(null);
+    const [searchQuery, setSearchQuery] = useState('');
 
 
     useEffect(() => {
@@ -99,6 +101,15 @@ export default function BranchesPage() {
         }
     }, [isAdmin, user]);
 
+    const filteredBranches = useMemo(() => {
+        if (!searchQuery) {
+            return branches;
+        }
+        return branches.filter(branch => 
+            branch.parkingLotName?.toLowerCase().includes(searchQuery.toLowerCase())
+        );
+    }, [searchQuery, branches]);
+
     const handleDeleteBranch = async () => {
         if (!branchToDelete || !isAdmin) return;
         setIsDeleting(true);
@@ -153,9 +164,19 @@ export default function BranchesPage() {
                     <AlertDescription>{error}</AlertDescription>
                 </Alert>
             )}
+             <div className="relative w-full sm:w-auto">
+                <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+                <Input
+                    type="search"
+                    placeholder="Buscar por nombre de estacionamiento..."
+                    className="pl-8 w-full sm:w-[300px]"
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                />
+            </div>
             <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-                {branches.length > 0 ? (
-                    branches.map(branch => (
+                {filteredBranches.length > 0 ? (
+                    filteredBranches.map(branch => (
                         <Card 
                             key={branch.uid} 
                             onClick={() => handleViewDetails(branch.uid)}
@@ -201,7 +222,9 @@ export default function BranchesPage() {
                      !error && (
                         <Card className="md:col-span-2 lg:col-span-3">
                             <CardContent className="pt-6">
-                                <p className="text-center text-muted-foreground">No se han encontrado otras sucursales registradas.</p>
+                                <p className="text-center text-muted-foreground">
+                                    {searchQuery ? "No se encontraron sucursales que coincidan con la búsqueda." : "No se han encontrado otras sucursales registradas."}
+                                </p>
                             </CardContent>
                         </Card>
                     )
