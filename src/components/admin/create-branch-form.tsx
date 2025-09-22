@@ -17,16 +17,16 @@ import { useToast } from '@/hooks/use-toast';
 import { Car, Eye, EyeOff } from 'lucide-react';
 
 const formSchema = z.object({
-    username: z.string().min(2, { message: 'Username must be at least 2 characters.' }),
-    parkingLotName: z.string().min(3, { message: 'Parking lot name must be at least 3 characters.' }),
-    maxCapacity: z.coerce.number().min(1, { message: 'Capacity must be at least 1.' }),
-    hourlyCost: z.coerce.number().min(0.1, { message: 'Hourly cost must be positive.' }),
-    address: z.string().min(5, { message: 'Address is required.' }),
-    city: z.string().min(2, { message: 'City is required.' }),
-    password: z.string().min(8, { message: 'Password must be at least 8 characters.' }),
+    username: z.string().min(2, { message: 'El nombre de usuario debe tener al menos 2 caracteres.' }),
+    parkingLotName: z.string().min(3, { message: 'El nombre del estacionamiento debe tener al menos 3 caracteres.' }),
+    maxCapacity: z.coerce.number().min(1, { message: 'La capacidad debe ser de al menos 1.' }),
+    hourlyCost: z.coerce.number().min(0.1, { message: 'El costo por hora debe ser positivo.' }),
+    address: z.string().min(5, { message: 'La dirección es requerida.' }),
+    city: z.string().min(2, { message: 'La ciudad es requerida.' }),
+    password: z.string().min(8, { message: 'La contraseña debe tener al menos 8 caracteres.' }),
     confirmPassword: z.string(),
 }).refine(data => data.password === data.confirmPassword, {
-    message: "Passwords don't match",
+    message: "Las contraseñas no coinciden",
     path: ["confirmPassword"],
 });
 
@@ -79,8 +79,8 @@ export default function CreateBranchForm() {
             });
 
             toast({
-                title: 'Branch Created',
-                description: `Successfully created branch for ${values.parkingLotName}. Login email: ${email}`,
+                title: 'Sucursal Creada',
+                description: `Sucursal para ${values.parkingLotName} creada exitosamente. Email de acceso: ${email}`,
             });
 
             router.push('/dashboard/branches');
@@ -89,15 +89,15 @@ export default function CreateBranchForm() {
             if (error.code === 'auth/email-already-in-use') {
                 toast({
                     variant: "destructive",
-                    title: "Creation Failed",
-                    description: `The parking lot name "${values.parkingLotName}" results in an email (${email}) that is already in use. Please choose a different name.`,
+                    title: "Falló la Creación",
+                    description: `El nombre del estacionamiento "${values.parkingLotName}" resulta en un email (${email}) que ya está en uso. Por favor, elige un nombre diferente.`,
                 });
             } else {
                 console.error("Error during branch creation:", error);
                 toast({
                     variant: "destructive",
-                    title: "Creation Failed",
-                    description: 'An unexpected error occurred. Please check the console for details.',
+                    title: "Falló la Creación",
+                    description: 'Ocurrió un error inesperado. Revisa la consola para más detalles.',
                 });
             }
         } finally {
@@ -108,36 +108,36 @@ export default function CreateBranchForm() {
     return (
         <Card className="w-full">
             <CardHeader>
-                <CardTitle>Create New Branch</CardTitle>
-                <CardDescription>Enter the new branch's details to create their account.</CardDescription>
+                <CardTitle>Crear Nueva Sucursal</CardTitle>
+                <CardDescription>Ingresa los detalles de la nueva sucursal para crear su cuenta.</CardDescription>
             </CardHeader>
             <Form {...form}>
                 <form onSubmit={form.handleSubmit(onSubmit)}>
                     <CardContent className="space-y-4">
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <FormField control={form.control} name="username" render={({ field }) => (
-                                <FormItem><FormLabel>Manager's Name</FormLabel><FormControl><Input placeholder="e.g., Juan Pérez" {...field} /></FormControl><FormMessage /></FormItem>
+                                <FormItem><FormLabel>Nombre del Gerente</FormLabel><FormControl><Input placeholder="Ej., Juan Pérez" {...field} /></FormControl><FormMessage /></FormItem>
                             )} />
                             <FormField control={form.control} name="parkingLotName" render={({ field }) => (
-                                <FormItem><FormLabel>Parking Lot Name</FormLabel><FormControl><Input placeholder="e.g., Estacionamiento Central" {...field} /></FormControl><FormMessage /></FormItem>
+                                <FormItem><FormLabel>Nombre del Estacionamiento</FormLabel><FormControl><Input placeholder="Ej., Estacionamiento Central" {...field} /></FormControl><FormMessage /></FormItem>
                             )} />
                             <FormField control={form.control} name="maxCapacity" render={({ field }) => (
-                                <FormItem><FormLabel>Max Vehicle Capacity</FormLabel><FormControl><Input type="number" {...field} /></FormControl><FormMessage /></FormItem>
+                                <FormItem><FormLabel>Capacidad Máxima de Vehículos</FormLabel><FormControl><Input type="number" {...field} /></FormControl><FormMessage /></FormItem>
                             )} />
                             <FormField control={form.control} name="hourlyCost" render={({ field }) => (
-                                <FormItem><FormLabel>Cost per Hour</FormLabel><FormControl><Input type="number" step="0.01" {...field} /></FormControl><FormMessage /></FormItem>
+                                <FormItem><FormLabel>Costo por Hora</FormLabel><FormControl><Input type="number" step="0.01" {...field} /></FormControl><FormMessage /></FormItem>
                             )} />
                             <FormField control={form.control} name="address" render={({ field }) => (
-                                <FormItem><FormLabel>Address</FormLabel><FormControl><Input placeholder="e.g., 123 Main St" {...field} /></FormControl><FormMessage /></FormItem>
+                                <FormItem><FormLabel>Dirección</FormLabel><FormControl><Input placeholder="Ej., Av. Principal 123" {...field} /></FormControl><FormMessage /></FormItem>
                             )} />
                             <FormField control={form.control} name="city" render={({ field }) => (
-                                <FormItem><FormLabel>City</FormLabel><FormControl><Input placeholder="e.g., Metropolis" {...field} /></FormControl><FormMessage /></FormItem>
+                                <FormItem><FormLabel>Ciudad</FormLabel><FormControl><Input placeholder="Ej., Metrópolis" {...field} /></FormControl><FormMessage /></FormItem>
                             )} />
                         </div>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <FormField control={form.control} name="password" render={({ field }) => (
                                 <FormItem>
-                                    <FormLabel>Password</FormLabel>
+                                    <FormLabel>Contraseña</FormLabel>
                                     <FormControl>
                                         <div className="relative">
                                             <Input type={showPassword ? "text" : "password"} placeholder="••••••••" {...field} />
@@ -150,16 +150,16 @@ export default function CreateBranchForm() {
                                 </FormItem>
                             )} />
                             <FormField control={form.control} name="confirmPassword" render={({ field }) => (
-                                <FormItem><FormLabel>Confirm Password</FormLabel><FormControl><Input type={showPassword ? "text" : "password"} placeholder="••••••••" {...field} /></FormControl><FormMessage /></FormItem>
+                                <FormItem><FormLabel>Confirmar Contraseña</FormLabel><FormControl><Input type={showPassword ? "text" : "password"} placeholder="••••••••" {...field} /></FormControl><FormMessage /></FormItem>
                             )} />
                         </div>
                     </CardContent>
                     <CardFooter className="flex justify-end gap-2">
                         <Button variant="outline" type="button" onClick={() => router.back()}>
-                            Cancel
+                            Cancelar
                         </Button>
                         <Button type="submit" disabled={isLoading}>
-                            {isLoading ? 'Creating Account...' : 'Create Branch'}
+                            {isLoading ? 'Creando Cuenta...' : 'Crear Sucursal'}
                         </Button>
                     </CardFooter>
                 </form>

@@ -14,9 +14,9 @@ import { useAuth } from '@/contexts/auth-context';
 
 const allMenuItems = [
   { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard, adminOnly: false },
-  { href: '/dashboard/history', label: 'Parking History', icon: History, adminOnly: false },
-  { href: '/dashboard/branches', label: 'Branches', icon: Building, adminOnly: true },
-  { href: '/dashboard/rate-suggester', label: 'AI Rate Suggester', icon: Bot, adminOnly: false },
+  { href: '/dashboard/history', label: 'Historial de Estacionamiento', icon: History, adminOnly: false },
+  { href: '/dashboard/branches', label: 'Sucursales', icon: Building, adminOnly: true },
+  { href: '/dashboard/rate-suggester', label: 'Sugeridor IA de Tarifas', icon: Bot, adminOnly: false },
 ];
 
 export default function AppSidebar() {
@@ -26,7 +26,7 @@ export default function AppSidebar() {
   const getFilteredMenuItems = () => {
     if (isAdmin) {
       // Admin sees Branches and AI Suggester
-      return allMenuItems.filter(item => item.adminOnly || item.href === '/dashboard/rate-suggester');
+      return allMenuItems.filter(item => item.adminOnly || item.href === '/dashboard/rate-suggester' || item.href === '/dashboard/history' || item.href === '/dashboard');
     }
     // Regular users see everything except admin-only items
     return allMenuItems.filter(item => !item.adminOnly);

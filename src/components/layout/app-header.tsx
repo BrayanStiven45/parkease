@@ -10,8 +10,8 @@ export default function AppHeader() {
   
   const welcomeMessage = () => {
     if (!user) return null;
-    if (userData?.username) return `Welcome, ${userData.username}`;
-    return `Welcome, ${user.email}`;
+    if (userData?.username) return `Bienvenido, ${userData.username}`;
+    return `Bienvenido, ${user.email}`;
   }
 
   return (
@@ -31,7 +31,7 @@ export default function AppHeader() {
         )}
         <Button variant="outline" size="sm" onClick={logout} disabled={loading}>
           <LogOut className="mr-2 h-4 w-4" />
-          Logout
+          Cerrar Sesión
         </Button>
       </div>
     </header>

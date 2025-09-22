@@ -22,17 +22,17 @@ import { suggestParkingRate, type SuggestParkingRateOutput } from '@/ai/flows/su
 import { Bot, Lightbulb } from 'lucide-react';
 
 const formSchema = z.object({
-  entryTime: z.string().datetime({ message: 'Please enter a valid date and time.' }),
-  durationHours: z.coerce.number().min(0.1, { message: 'Duration must be at least 0.1 hours.' }),
-  historicalData: z.string().min(10, { message: 'Please provide some historical data.' }),
+  entryTime: z.string().datetime({ message: 'Por favor, ingresa una fecha y hora válidas.' }),
+  durationHours: z.coerce.number().min(0.1, { message: 'La duración debe ser de al menos 0.1 horas.' }),
+  historicalData: z.string().min(10, { message: 'Por favor, proporciona algunos datos históricos.' }),
 });
 
 const defaultHistoricalData = `
-- Monday 9 AM, 2 hours, $5.00
-- Monday 2 PM, 1 hour, $2.50
-- Tuesday 9 AM, 8 hours, $20.00
-- Friday 6 PM, 3 hours, $10.00 (event surcharge)
-- Saturday 1 PM, 4 hours, $10.00
+- Lunes 9 AM, 2 horas, $5.00
+- Lunes 2 PM, 1 hora, $2.50
+- Martes 9 AM, 8 horas, $20.00
+- Viernes 6 PM, 3 horas, $10.00 (recargo por evento)
+- Sábado 1 PM, 4 horas, $10.00
 `.trim();
 
 export default function RateSuggesterForm() {
@@ -61,7 +61,7 @@ export default function RateSuggesterForm() {
       });
       setSuggestion(result);
     } catch (e: any) {
-      setError('An error occurred while fetching the suggestion.');
+      setError('Ocurrió un error al obtener la sugerencia.');
       console.error(e);
     } finally {
       setIsLoading(false);
@@ -78,7 +78,7 @@ export default function RateSuggesterForm() {
                         name="entryTime"
                         render={({ field }) => (
                             <FormItem>
-                            <FormLabel>Entry Time</FormLabel>
+                            <FormLabel>Hora de Entrada</FormLabel>
                             <FormControl>
                                 <Input type="datetime-local" {...field} />
                             </FormControl>
@@ -91,7 +91,7 @@ export default function RateSuggesterForm() {
                         name="durationHours"
                         render={({ field }) => (
                             <FormItem>
-                            <FormLabel>Parking Duration (hours)</FormLabel>
+                            <FormLabel>Duración del Estacionamiento (horas)</FormLabel>
                             <FormControl>
                                 <Input type="number" step="0.1" {...field} />
                             </FormControl>
@@ -104,12 +104,12 @@ export default function RateSuggesterForm() {
                         name="historicalData"
                         render={({ field }) => (
                             <FormItem>
-                            <FormLabel>Historical Data</FormLabel>
+                            <FormLabel>Datos Históricos</FormLabel>
                             <FormControl>
-                                <Textarea rows={6} placeholder="Provide some historical parking data..." {...field} />
+                                <Textarea rows={6} placeholder="Proporciona algunos datos históricos de estacionamiento..." {...field} />
                             </FormControl>
                             <FormDescription>
-                                Provide examples of past parking sessions to improve accuracy.
+                                Proporciona ejemplos de sesiones de estacionamiento pasadas para mejorar la precisión.
                             </FormDescription>
                             <FormMessage />
                             </FormItem>
@@ -119,7 +119,7 @@ export default function RateSuggesterForm() {
                 <CardFooter>
                      <Button type="submit" disabled={isLoading}>
                         <Bot className="mr-2 h-4 w-4" />
-                        {isLoading ? 'Thinking...' : 'Get Suggestion'}
+                        {isLoading ? 'Pensando...' : 'Obtener Sugerencia'}
                     </Button>
                 </CardFooter>
             </Card>
@@ -130,16 +130,16 @@ export default function RateSuggesterForm() {
         <Card className="bg-primary/5 border-primary/20">
             <CardHeader>
                 <CardTitle className="flex items-center gap-2">
-                    <Lightbulb className="text-accent" /> AI Suggestion
+                    <Lightbulb className="text-accent" /> Sugerencia de la IA
                 </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
                 <div className="text-center">
-                    <p className="text-sm text-muted-foreground">Suggested Rate</p>
+                    <p className="text-sm text-muted-foreground">Tarifa Sugerida</p>
                     <p className="text-4xl font-bold text-primary">${suggestion.suggestedRate.toFixed(2)}</p>
                 </div>
                 <div>
-                    <h4 className="font-semibold mb-1">Reasoning</h4>
+                    <h4 className="font-semibold mb-1">Razonamiento</h4>
                     <p className="text-sm text-muted-foreground whitespace-pre-wrap">{suggestion.reasoning}</p>
                 </div>
             </CardContent>

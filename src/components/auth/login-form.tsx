@@ -15,8 +15,8 @@ import { useToast } from '@/hooks/use-toast';
 import { Car } from 'lucide-react';
 
 const formSchema = z.object({
-    email: z.string().email({ message: 'Please enter a valid email.' }),
-    password: z.string().min(6, { message: 'Password must be at least 6 characters.' }),
+    email: z.string().email({ message: 'Por favor, ingresa un email válido.' }),
+    password: z.string().min(6, { message: 'La contraseña debe tener al menos 6 caracteres.' }),
 });
 
 export default function LoginForm() {
@@ -40,8 +40,8 @@ export default function LoginForm() {
         } catch (error: any) {
             toast({
                 variant: "destructive",
-                title: "Authentication Failed",
-                description: "Please check your email and password.",
+                title: "Autenticación Fallida",
+                description: "Por favor, revisa tu email y contraseña.",
             });
         } finally {
             setIsLoading(false);
@@ -55,8 +55,8 @@ export default function LoginForm() {
                     <Car className="h-8 w-8 text-primary" />
                     <h1 className="text-3xl font-bold font-headline">ParkEase</h1>
                 </div>
-                <CardTitle>Welcome Back</CardTitle>
-                <CardDescription>Enter your credentials to access your account</CardDescription>
+                <CardTitle>Bienvenido de Nuevo</CardTitle>
+                <CardDescription>Ingresa tus credenciales para acceder a tu cuenta</CardDescription>
             </CardHeader>
             <Form {...form}>
                 <form onSubmit={form.handleSubmit(onSubmit)}>
@@ -68,7 +68,7 @@ export default function LoginForm() {
                                 <FormItem>
                                     <FormLabel>Email</FormLabel>
                                     <FormControl>
-                                        <Input type="email" placeholder="name@example.com" {...field} />
+                                        <Input type="email" placeholder="nombre@ejemplo.com" {...field} />
                                     </FormControl>
                                     <FormMessage />
                                 </FormItem>
@@ -79,7 +79,7 @@ export default function LoginForm() {
                             name="password"
                             render={({ field }) => (
                                 <FormItem>
-                                    <FormLabel>Password</FormLabel>
+                                    <FormLabel>Contraseña</FormLabel>
                                     <FormControl>
                                         <Input type="password" placeholder="••••••••" {...field} />
                                     </FormControl>
@@ -90,7 +90,7 @@ export default function LoginForm() {
                     </CardContent>
                     <CardFooter className="flex flex-col gap-4">
                         <Button type="submit" className="w-full" disabled={isLoading}>
-                            {isLoading ? 'Signing In...' : 'Sign In'}
+                            {isLoading ? 'Iniciando Sesión...' : 'Iniciar Sesión'}
                         </Button>
                     </CardFooter>
                 </form>

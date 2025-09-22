@@ -85,13 +85,13 @@ export default function BranchesPage() {
                     setIsLoadingBranches(false);
                 }).catch(e => {
                      console.error("Error fetching branch details:", e);
-                     setError("Failed to load branch details.");
+                     setError("No se pudieron cargar los detalles de la sucursal.");
                      setIsLoadingBranches(false);
                 });
 
             }, (e) => {
                 console.error("Error fetching branches:", e);
-                setError("Failed to load branches. Please check the console for more details.");
+                setError("No se pudieron cargar las sucursales. Revisa la consola para más detalles.");
                 setIsLoadingBranches(false);
             });
 
@@ -108,8 +108,8 @@ export default function BranchesPage() {
             await deleteDoc(doc(db, "users", branchToDelete.uid));
             
             toast({
-                title: "Success",
-                description: `Branch "${branchToDelete.parkingLotName}" data has been deleted. Please delete the user from Firebase Authentication console manually.`,
+                title: "Éxito",
+                description: `Los datos de la sucursal "${branchToDelete.parkingLotName}" han sido eliminados. Por favor, elimina el usuario desde la consola de Firebase Authentication manualmente.`,
             });
             
         } catch (e: any) {
@@ -117,7 +117,7 @@ export default function BranchesPage() {
             toast({
                 variant: "destructive",
                 title: "Error",
-                description: e.message || "Failed to delete the branch.",
+                description: e.message || "No se pudo eliminar la sucursal.",
             });
         } finally {
             setIsDeleting(false);
@@ -130,7 +130,7 @@ export default function BranchesPage() {
     };
 
     if (loading || isLoadingBranches) {
-        return <div className="text-center">Loading...</div>;
+        return <div className="text-center">Cargando...</div>;
     }
 
     if (!isAdmin) {
@@ -210,16 +210,16 @@ export default function BranchesPage() {
             <AlertDialog open={!!branchToDelete} onOpenChange={(isOpen) => !isOpen && setBranchToDelete(null)}>
                 <AlertDialogContent>
                     <AlertDialogHeader>
-                    <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                    <AlertDialogTitle>¿Estás absolutamente seguro?</AlertDialogTitle>
                     <AlertDialogDescription>
-                        This action will permanently delete the branch data from Firestore.
-                        You will need to manually delete the user from Firebase Authentication. This cannot be undone.
+                        Esta acción eliminará permanentemente los datos de la sucursal de Firestore.
+                        Deberás eliminar manualmente el usuario desde Firebase Authentication. Esta acción no se puede deshacer.
                     </AlertDialogDescription>
                     </AlertDialogHeader>
                     <AlertDialogFooter>
-                    <AlertDialogCancel disabled={isDeleting}>Cancel</AlertDialogCancel>
+                    <AlertDialogCancel disabled={isDeleting}>Cancelar</AlertDialogCancel>
                     <AlertDialogAction onClick={handleDeleteBranch} disabled={isDeleting}>
-                        {isDeleting ? 'Deleting...' : 'Continue'}
+                        {isDeleting ? 'Eliminando...' : 'Continuar'}
                     </AlertDialogAction>
                     </AlertDialogFooter>
                 </AlertDialogContent>

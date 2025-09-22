@@ -60,7 +60,7 @@ export default function PaymentModal({
     const hoursParked = secondsParked / 3600;
     const initialCost = hoursParked * hourlyCost;
 
-    const pointsDiscount = pointsToRedeem * 0.01; // Assuming 1 point = $0.01
+    const pointsDiscount = pointsToRedeem * 40; // Assuming 1 point = $0.01
     const finalAmount = Math.max(0, initialCost - pointsDiscount);
 
     return {
@@ -68,7 +68,7 @@ export default function PaymentModal({
       initialCost: initialCost.toFixed(2),
       pointsDiscount: pointsDiscount.toFixed(2),
       finalAmount: parseFloat(finalAmount.toFixed(2)),
-      pointsEarned: Math.floor(minutesParked), // 1 point per minute
+      pointsEarned: Math.floor(hoursParked * 10), // 1 point per minute
     };
   }, [record.entryTime, pointsToRedeem, hourlyCost, paymentInitiatedAt]);
 
@@ -86,7 +86,7 @@ export default function PaymentModal({
         toast({
             variant: "destructive",
             title: "Error",
-            description: "Cannot process payment without a user context.",
+            description: "No se puede procesar el pago sin un contexto de usuario.",
         });
         return;
     }
@@ -112,16 +112,16 @@ export default function PaymentModal({
 
         onPaymentSuccess();
         toast({
-            title: "Payment Successful",
-            description: `Payment for ${record.plate} processed. Total: $${costDetails.finalAmount.toFixed(2)}. Points earned: ${costDetails.pointsEarned}.`,
+            title: "Pago Exitoso",
+            description: `Pago para ${record.plate} procesado. Total: $${costDetails.finalAmount.toFixed(2)}. Puntos ganados: ${costDetails.pointsEarned}.`,
         });
 
     } catch (error) {
         console.error("Error processing payment: ", error);
         toast({
             variant: "destructive",
-            title: "Payment Failed",
-            description: "Could not update the parking record or loyalty points.",
+            title: "Pago Fallido",
+            description: "No se pudo actualizar el registro de estacionamiento o los puntos de lealtad.",
         });
     } finally {
         setIsLoading(false);
@@ -133,28 +133,28 @@ export default function PaymentModal({
     <Dialog open={true} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>Process Payment</DialogTitle>
+          <DialogTitle>Procesar Pago</DialogTitle>
           <DialogDescription>
-            For vehicle with plate <span className="font-semibold font-code">{record.plate}</span>
+            Para vehículo con placa <span className="font-semibold font-code">{record.plate}</span>
           </DialogDescription>
         </DialogHeader>
         <div className="space-y-4 py-4">
           <Card>
             <CardContent className="pt-6 space-y-2">
-              <div className="flex justify-between"><span>Parking Duration:</span> <span>{costDetails.hoursParked} hours</span></div>
-              <div className="flex justify-between"><span>Calculated Cost:</span> <span className="font-semibold">${costDetails.initialCost}</span></div>
-               <div className="flex justify-between text-sm text-muted-foreground"><span>Points to be Earned:</span> <span>{costDetails.pointsEarned}</span></div>
+              <div className="flex justify-between"><span>Duración del Estacionamiento:</span> <span>{costDetails.hoursParked} horas</span></div>
+              <div className="flex justify-between"><span>Costo Calculado:</span> <span className="font-semibold">${costDetails.initialCost}</span></div>
+               <div className="flex justify-between text-sm text-muted-foreground"><span>Puntos a Ganar:</span> <span>{costDetails.pointsEarned}</span></div>
             </CardContent>
           </Card>
           
           <Card>
             <CardContent className="pt-6 space-y-4">
                <div className="flex justify-between items-center">
-                   <Label>Available Loyalty Points:</Label>
+                   <Label>Puntos de Lealtad Disponibles:</Label>
                    <span className="font-bold text-lg text-primary">{availablePoints}</span>
                </div>
                <div className="space-y-2">
-                   <Label htmlFor="points">Points to Redeem</Label>
+                   <Label htmlFor="points">Puntos a Canjear</Label>
                    <Input 
                         id="points"
                         type="number"
@@ -170,14 +170,14 @@ export default function PaymentModal({
           <Separator />
            
           <div className="space-y-2 text-lg">
-            <div className="flex justify-between"><span>Points Discount:</span> <span className="text-green-600">-${costDetails.pointsDiscount}</span></div>
-            <div className="flex justify-between font-bold"><span>Total Due:</span> <span>${costDetails.finalAmount.toFixed(2)}</span></div>
+            <div className="flex justify-between"><span>Descuento por Puntos:</span> <span className="text-green-600">-${costDetails.pointsDiscount}</span></div>
+            <div className="flex justify-between font-bold"><span>Total a Pagar:</span> <span>${costDetails.finalAmount.toFixed(2)}</span></div>
           </div>
         </div>
         <DialogFooter>
-          <Button variant="outline" onClick={onClose} disabled={isLoading}>Cancel</Button>
+          <Button variant="outline" onClick={onClose} disabled={isLoading}>Cancelar</Button>
           <Button onClick={handlePayment} disabled={isLoading}>
-            {isLoading ? 'Processing...' : 'Confirm Payment'}
+            {isLoading ? 'Procesando...' : 'Confirmar Pago'}
           </Button>
         </DialogFooter>
       </DialogContent>

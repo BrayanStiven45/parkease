@@ -19,16 +19,16 @@ import { AlertDialog, AlertDialogAction, AlertDialogContent, AlertDialogDescript
 import { useAuth } from '@/contexts/auth-context';
 
 const formSchema = z.object({
-    username: z.string().min(2, { message: 'Username must be at least 2 characters.' }),
-    parkingLotName: z.string().min(3, { message: 'Parking lot name must be at least 3 characters.' }),
-    maxCapacity: z.coerce.number().min(1, { message: 'Capacity must be at least 1.' }),
-    hourlyCost: z.coerce.number().min(0.1, { message: 'Hourly cost must be positive.' }),
-    address: z.string().min(5, { message: 'Address is required.' }),
-    city: z.string().min(2, { message: 'City is required.' }),
-    password: z.string().min(8, { message: 'Password must be at least 8 characters.' }),
+    username: z.string().min(2, { message: 'El nombre de usuario debe tener al menos 2 caracteres.' }),
+    parkingLotName: z.string().min(3, { message: 'El nombre del estacionamiento debe tener al menos 3 caracteres.' }),
+    maxCapacity: z.coerce.number().min(1, { message: 'La capacidad debe ser de al menos 1.' }),
+    hourlyCost: z.coerce.number().min(0.1, { message: 'El costo por hora debe ser positivo.' }),
+    address: z.string().min(5, { message: 'La dirección es requerida.' }),
+    city: z.string().min(2, { message: 'La ciudad es requerida.' }),
+    password: z.string().min(8, { message: 'La contraseña debe tener al menos 8 caracteres.' }),
     confirmPassword: z.string(),
 }).refine(data => data.password === data.confirmPassword, {
-    message: "Passwords don't match",
+    message: "Las contraseñas no coinciden",
     path: ["confirmPassword"],
 });
 
@@ -62,8 +62,8 @@ export default function SignUpForm() {
     const handleCopyToClipboard = () => {
         navigator.clipboard.writeText(generatedEmail);
         toast({
-            title: "Copied!",
-            description: "Your login email has been copied to the clipboard.",
+            title: "¡Copiado!",
+            description: "Tu email de acceso ha sido copiado al portapapeles.",
         });
     };
 
@@ -103,10 +103,10 @@ export default function SignUpForm() {
             console.error("Error during sign up:", error);
             toast({
                 variant: "destructive",
-                title: "Sign Up Failed",
+                title: "Registro Fallido",
                 description: error.code === 'auth/email-already-in-use'
-                    ? `The email ${email} is already in use. Please choose a different parking lot name.`
-                    : 'An unexpected error occurred.',
+                    ? `El email ${email} ya está en uso. Por favor, elige un nombre de estacionamiento diferente.`
+                    : 'Ocurrió un error inesperado.',
             });
         } finally {
             setIsLoading(false);
@@ -121,36 +121,36 @@ export default function SignUpForm() {
                         <Car className="h-8 w-8 text-primary" />
                         <h1 className="text-3xl font-bold font-headline">ParkEase</h1>
                     </div>
-                    <CardTitle>Create an Account</CardTitle>
-                    <CardDescription>Enter your business details to get started.</CardDescription>
+                    <CardTitle>Crear una Cuenta</CardTitle>
+                    <CardDescription>Ingresa los detalles de tu negocio para comenzar.</CardDescription>
                 </CardHeader>
                 <Form {...form}>
                     <form onSubmit={form.handleSubmit(onSubmit)}>
                         <CardContent className="space-y-4">
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 <FormField control={form.control} name="username" render={({ field }) => (
-                                    <FormItem><FormLabel>Your Name</FormLabel><FormControl><Input placeholder="e.g., Juan Pérez" {...field} /></FormControl><FormMessage /></FormItem>
+                                    <FormItem><FormLabel>Tu Nombre</FormLabel><FormControl><Input placeholder="Ej., Juan Pérez" {...field} /></FormControl><FormMessage /></FormItem>
                                 )} />
                                 <FormField control={form.control} name="parkingLotName" render={({ field }) => (
-                                    <FormItem><FormLabel>Parking Lot Name</FormLabel><FormControl><Input placeholder="e.g., Estacionamiento Central" {...field} /></FormControl><FormMessage /></FormItem>
+                                    <FormItem><FormLabel>Nombre del Estacionamiento</FormLabel><FormControl><Input placeholder="Ej., Estacionamiento Central" {...field} /></FormControl><FormMessage /></FormItem>
                                 )} />
                                 <FormField control={form.control} name="maxCapacity" render={({ field }) => (
-                                    <FormItem><FormLabel>Max Vehicle Capacity</FormLabel><FormControl><Input type="number" {...field} /></FormControl><FormMessage /></FormItem>
+                                    <FormItem><FormLabel>Capacidad Máxima de Vehículos</FormLabel><FormControl><Input type="number" {...field} /></FormControl><FormMessage /></FormItem>
                                 )} />
                                 <FormField control={form.control} name="hourlyCost" render={({ field }) => (
-                                    <FormItem><FormLabel>Cost per Hour</FormLabel><FormControl><Input type="number" step="0.01" {...field} /></FormControl><FormMessage /></FormItem>
+                                    <FormItem><FormLabel>Costo por Hora</FormLabel><FormControl><Input type="number" step="0.01" {...field} /></FormControl><FormMessage /></FormItem>
                                 )} />
                                 <FormField control={form.control} name="address" render={({ field }) => (
-                                    <FormItem><FormLabel>Address</FormLabel><FormControl><Input placeholder="e.g., 123 Main St" {...field} /></FormControl><FormMessage /></FormItem>
+                                    <FormItem><FormLabel>Dirección</FormLabel><FormControl><Input placeholder="Ej., Av. Principal 123" {...field} /></FormControl><FormMessage /></FormItem>
                                 )} />
                                 <FormField control={form.control} name="city" render={({ field }) => (
-                                    <FormItem><FormLabel>City</FormLabel><FormControl><Input placeholder="e.g., Metropolis" {...field} /></FormControl><FormMessage /></FormItem>
+                                    <FormItem><FormLabel>Ciudad</FormLabel><FormControl><Input placeholder="Ej., Metrópolis" {...field} /></FormControl><FormMessage /></FormItem>
                                 )} />
                             </div>
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 <FormField control={form.control} name="password" render={({ field }) => (
                                     <FormItem>
-                                        <FormLabel>Password</FormLabel>
+                                        <FormLabel>Contraseña</FormLabel>
                                         <FormControl>
                                             <div className="relative">
                                                 <Input type={showPassword ? "text" : "password"} placeholder="••••••••" {...field} />
@@ -163,13 +163,13 @@ export default function SignUpForm() {
                                     </FormItem>
                                 )} />
                                 <FormField control={form.control} name="confirmPassword" render={({ field }) => (
-                                    <FormItem><FormLabel>Confirm Password</FormLabel><FormControl><Input type={showPassword ? "text" : "password"} placeholder="••••••••" {...field} /></FormControl><FormMessage /></FormItem>
+                                    <FormItem><FormLabel>Confirmar Contraseña</FormLabel><FormControl><Input type={showPassword ? "text" : "password"} placeholder="••••••••" {...field} /></FormControl><FormMessage /></FormItem>
                                 )} />
                             </div>
                         </CardContent>
                         <CardFooter>
                             <Button type="submit" className="w-full" disabled={isLoading}>
-                                {isLoading ? 'Creating Account...' : 'Sign Up'}
+                                {isLoading ? 'Creando Cuenta...' : 'Registrarse'}
                             </Button>
                         </CardFooter>
                     </form>
@@ -179,9 +179,9 @@ export default function SignUpForm() {
             <AlertDialog open={showSuccessDialog} onOpenChange={setShowSuccessDialog}>
                 <AlertDialogContent>
                     <AlertDialogHeader>
-                    <AlertDialogTitle>Account Created Successfully!</AlertDialogTitle>
+                    <AlertDialogTitle>¡Cuenta Creada Exitosamente!</AlertDialogTitle>
                     <AlertDialogDescription>
-                        This is your email for logging in. Please save it.
+                        Este es tu email para iniciar sesión. Por favor, guárdalo.
                     </AlertDialogDescription>
                     </AlertDialogHeader>
                     <div className="flex items-center space-x-2">
@@ -191,7 +191,7 @@ export default function SignUpForm() {
                         </Button>
                     </div>
                     <AlertDialogFooter>
-                        <AlertDialogAction onClick={handleContinueToDashboard}>Continue to Dashboard</AlertDialogAction>
+                        <AlertDialogAction onClick={handleContinueToDashboard}>Continuar al Dashboard</AlertDialogAction>
                     </AlertDialogFooter>
                 </AlertDialogContent>
             </AlertDialog>

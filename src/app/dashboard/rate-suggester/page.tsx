@@ -16,16 +16,16 @@ export default function RateSuggesterPage() {
     }, [user, loading, router]);
 
     if (loading || !user) {
-        return <div className="text-center">Loading...</div>;
+        return <div className="text-center">Cargando...</div>;
     }
 
     return (
         <div className="w-full space-y-6">
             <Card>
                 <CardHeader>
-                    <CardTitle>AI-Powered Rate Suggester</CardTitle>
+                    <CardTitle>Sugeridor de Tarifas con IA</CardTitle>
                     <CardDescription>
-                        Use our AI tool to get optimal pricing suggestions based on entry time, duration, and historical patterns.
+                        Usa nuestra herramienta de IA para obtener sugerencias de precios óptimos basados en la hora de entrada, duración y patrones históricos.
                     </CardDescription>
                 </CardHeader>
             </Card>

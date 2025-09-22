@@ -87,7 +87,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if ((loading || isUserDataLoading) && !isAuthPage) {
         return (
             <div className="flex h-screen items-center justify-center">
-                <p>Loading...</p>
+                <p>Cargando...</p>
             </div>
         );
     }
@@ -102,7 +102,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 export function useAuth() {
     const context = useContext(AuthContext);
     if (context === undefined) {
-        throw new Error('useAuth must be used within an AuthProvider');
+        throw new Error('useAuth debe ser usado dentro de un AuthProvider');
     }
     return context;
 }

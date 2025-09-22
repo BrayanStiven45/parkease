@@ -34,28 +34,28 @@ export default function VehicleEntryModal({ isOpen, onClose, onAddRecord }: Vehi
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
-          <DialogTitle>Record Vehicle Entry</DialogTitle>
+          <DialogTitle>Registrar Entrada de Vehículo</DialogTitle>
           <DialogDescription>
-            Enter the vehicle&apos;s license plate to start a new parking session.
+            Ingresa la placa del vehículo para iniciar una nueva sesión de estacionamiento.
           </DialogDescription>
         </DialogHeader>
         <div className="grid gap-4 py-4">
           <div className="grid grid-cols-4 items-center gap-4">
             <Label htmlFor="plate" className="text-right">
-              Plate
+              Placa
             </Label>
             <Input
               id="plate"
               value={plate}
               onChange={(e) => setPlate(e.target.value)}
               className="col-span-3"
-              placeholder="e.g., ABC-123"
+              placeholder="Ej., ABC-123"
             />
           </div>
         </div>
         <DialogFooter>
           <Button type="submit" onClick={handleSubmit}>
-            Confirm Entry
+            Confirmar Entrada
           </Button>
         </DialogFooter>
       </DialogContent>

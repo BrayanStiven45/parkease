@@ -7,9 +7,9 @@ export default function LoginPage() {
             <div className="w-full max-w-sm space-y-4">
                 <LoginForm />
                 <p className="text-center text-sm text-muted-foreground">
-                    Don't have an account?{' '}
+                    ¿No tienes una cuenta?{' '}
                     <Link href="/signup" className="font-semibold text-primary hover:underline">
-                        Sign Up
+                        Regístrate
                     </Link>
                 </p>
             </div>

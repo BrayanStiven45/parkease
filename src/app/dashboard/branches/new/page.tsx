@@ -16,7 +16,7 @@ export default function NewBranchPage() {
     }, [isAdmin, loading, router]);
 
     if (loading || !isAdmin) {
-        return <div className="text-center">Loading...</div>;
+        return <div className="text-center">Cargando...</div>;
     }
 
     return (

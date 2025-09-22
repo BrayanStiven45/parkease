@@ -138,7 +138,7 @@ export default function BranchDetailPage() {
 
 
     if (authLoading || loading) {
-        return <div className="text-center">Loading Branch Dashboard...</div>;
+        return <div className="text-center">Cargando Dashboard de Sucursal...</div>;
     }
 
     if (!isAdmin) {
@@ -158,28 +158,28 @@ export default function BranchDetailPage() {
                     <Card>
                         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                             <CardTitle className="text-sm font-medium">
-                            Vehicles Currently Parked
+                            Vehículos Estacionados Actualmente
                             </CardTitle>
                             <Car className="h-4 w-4 text-muted-foreground" />
                         </CardHeader>
                         <CardContent>
                             <div className="text-2xl font-bold">{totalParked}</div>
                             <p className="text-xs text-muted-foreground">
-                            Live count of vehicles in the parking lot
+                            Conteo en vivo de vehículos en el estacionamiento
                             </p>
                         </CardContent>
                     </Card>
                     <Card>
                         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                             <CardTitle className="text-sm font-medium">
-                            Average Parking Time
+                            Tiempo Promedio de Estacionamiento
                             </CardTitle>
                             <Clock className="h-4 w-4 text-muted-foreground" />
                         </CardHeader>
                         <CardContent>
                             <div className="text-2xl font-bold">{avgTime}</div>
                             <p className="text-xs text-muted-foreground">
-                            Based on currently parked vehicles
+                            Basado en los vehículos estacionados actualmente
                             </p>
                         </CardContent>
                     </Card>
@@ -188,7 +188,7 @@ export default function BranchDetailPage() {
 
                  <Card>
                     <CardHeader>
-                        <CardTitle>Completed Parking Records</CardTitle>
+                        <CardTitle>Registros de Estacionamiento Completados</CardTitle>
                     </CardHeader>
                     <CardContent>
                         <ParkingHistoryTable 

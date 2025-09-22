@@ -26,7 +26,7 @@ interface ActiveParkingTableProps {
 
 const formatElapsedTime = (start: Date, end: Date) => {
     if (!(start instanceof Date) || isNaN(start.getTime())) {
-        return 'Calculating...';
+        return 'Calculando...';
     }
     const duration = intervalToDuration({ start, end });
     return `${duration.hours || 0}h ${duration.minutes || 0}m ${duration.seconds || 0}s`;
@@ -60,19 +60,19 @@ export default function ActiveParkingTable({
 
     const getEmptyStateMessage = () => {
         if (hasSearchQuery) {
-            return "No vehicles found with that plate.";
+            return "No se encontraron vehículos con esa placa.";
         }
-        return "No vehicles currently parked.";
+        return "No hay vehículos estacionados actualmente.";
     }
 
   return (
     <Table>
       <TableHeader>
         <TableRow>
-          <TableHead>Plate</TableHead>
-          <TableHead>Entry Time</TableHead>
-          <TableHead>Elapsed Time</TableHead>
-          {!readOnly && <TableHead className="text-right">Actions</TableHead>}
+          <TableHead>Placa</TableHead>
+          <TableHead>Hora de Entrada</TableHead>
+          <TableHead>Tiempo Transcurrido</TableHead>
+          {!readOnly && <TableHead className="text-right">Acciones</TableHead>}
         </TableRow>
       </TableHeader>
       <TableBody>
@@ -89,7 +89,7 @@ export default function ActiveParkingTable({
                 {!readOnly && (
                   <TableCell className="text-right">
                       <Button variant="outline" size="sm" onClick={() => onProcessPayment(record)}>
-                      Process Payment
+                      Procesar Pago
                       </Button>
                   </TableCell>
                 )}

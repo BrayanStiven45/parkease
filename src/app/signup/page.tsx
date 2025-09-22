@@ -7,9 +7,9 @@ export default function SignUpPage() {
             <div className="w-full max-w-sm space-y-4">
                 <SignUpForm />
                  <p className="text-center text-sm text-muted-foreground">
-                    Already have an account?{' '}
+                    ¿Ya tienes una cuenta?{' '}
                     <Link href="/" className="font-semibold text-primary hover:underline">
-                        Sign In
+                        Inicia Sesión
                     </Link>
                 </p>
             </div>

@@ -50,7 +50,7 @@ export default function HistoryPage() {
                     ...data,
                     entryTime: (data.entryTime as Timestamp)?.toDate().toISOString(),
                     exitTime: (data.exitTime as Timestamp)?.toDate().toISOString(),
-                    parkingLotName: userId ? branchesMap.get(userId) : 'Unknown Branch',
+                    parkingLotName: userId ? branchesMap.get(userId) : 'Sucursal Desconocida',
                 } as ParkingRecord;
             });
 
@@ -131,14 +131,14 @@ export default function HistoryPage() {
     }, [historyRecords, searchQuery, selectedDate]);
 
     if (authLoading || !user) {
-        return <div className="text-center">Loading...</div>;
+        return <div className="text-center">Cargando...</div>;
     }
 
     return (
         <div className="space-y-6">
             <Card>
                 <CardHeader>
-                    <CardTitle>Completed Parking Records</CardTitle>
+                    <CardTitle>Registros de Estacionamiento Completados</CardTitle>
                 </CardHeader>
                 <CardContent>
                     <ParkingHistoryTable 

@@ -59,7 +59,7 @@ export default function ActiveParking({ branchId, readOnly = false }: ActivePark
         toast({
           variant: 'destructive',
           title: 'Error',
-          description: 'Could not fetch parking records.',
+          description: 'No se pudieron obtener los registros de estacionamiento.',
         });
         setIsLoading(false);
       }
@@ -93,8 +93,8 @@ export default function ActiveParking({ branchId, readOnly = false }: ActivePark
     if (!user) {
       toast({
         variant: 'destructive',
-        title: 'Authentication Error',
-        description: 'You must be logged in to add a record.',
+        title: 'Error de Autenticación',
+        description: 'Debes iniciar sesión para agregar un registro.',
       });
       return;
     }
@@ -111,8 +111,8 @@ export default function ActiveParking({ branchId, readOnly = false }: ActivePark
           createdAt: serverTimestamp(),
         });
         toast({
-          title: 'New Plate Registered',
-          description: `Plate ${plate} has been added to the loyalty system.`,
+          title: 'Nueva Placa Registrada',
+          description: `La placa ${plate} ha sido agregada al sistema de lealtad.`,
         });
       }
 
@@ -123,15 +123,15 @@ export default function ActiveParking({ branchId, readOnly = false }: ActivePark
         status: 'parked',
       });
       toast({
-        title: 'Success',
-        description: `Vehicle with plate ${plate} has been registered.`,
+        title: 'Éxito',
+        description: `El vehículo con placa ${plate} ha sido registrado.`,
       });
     } catch (error) {
       console.error("Error adding document: ", error);
       toast({
         variant: 'destructive',
         title: 'Error',
-        description: 'Failed to add new parking record.',
+        description: 'No se pudo agregar el nuevo registro de estacionamiento.',
       });
     }
   };
@@ -145,13 +145,13 @@ export default function ActiveParking({ branchId, readOnly = false }: ActivePark
       <Card>
         <CardHeader>
           <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-            <CardTitle>Active Parking</CardTitle>
+            <CardTitle>Estacionamiento Activo</CardTitle>
             <div className="flex w-full sm:w-auto flex-col sm:flex-row sm:items-center gap-2">
                 <div className="relative w-full sm:w-auto">
                     <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
                     <Input
                         type="search"
-                        placeholder="Search by plate..."
+                        placeholder="Buscar por placa..."
                         className="pl-8 sm:w-[200px] lg:w-[250px]"
                         value={searchQuery}
                         onChange={(e) => setSearchQuery(e.target.value)}
@@ -160,7 +160,7 @@ export default function ActiveParking({ branchId, readOnly = false }: ActivePark
                 {!readOnly && (
                   <Button size="sm" onClick={() => setEntryModalOpen(true)} className="w-full sm:w-auto">
                       <PlusCircle className="mr-2 h-4 w-4" />
-                      Record Entry
+                      Registrar Entrada
                   </Button>
                 )}
             </div>

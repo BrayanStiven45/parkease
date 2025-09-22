@@ -57,9 +57,9 @@ export default function ParkingHistoryTable({
 
     const getEmptyStateMessage = () => {
         if (hasActiveFilters) {
-            return "No records match the current filters.";
+            return "No hay registros que coincidan con los filtros actuales.";
         }
-        return "No historical records found.";
+        return "No se encontraron registros históricos.";
     };
 
     if (isLoading) {
@@ -79,7 +79,7 @@ export default function ParkingHistoryTable({
                 <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
                 <Input
                     type="search"
-                    placeholder="Search by plate..."
+                    placeholder="Buscar por placa..."
                     className="pl-8 w-full"
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
@@ -95,7 +95,7 @@ export default function ParkingHistoryTable({
                     )}
                 >
                     <CalendarIcon className="mr-2 h-4 w-4" />
-                    {selectedDate ? format(selectedDate, "PPP") : <span>Pick an entry date</span>}
+                    {selectedDate ? format(selectedDate, "PPP") : <span>Elige una fecha de entrada</span>}
                 </Button>
                 </PopoverTrigger>
                 <PopoverContent className="w-auto p-0" align="start">
@@ -109,18 +109,18 @@ export default function ParkingHistoryTable({
             </Popover>
              {hasActiveFilters && (
                 <Button variant="ghost" onClick={() => { setSearchQuery(''); setSelectedDate(undefined); }}>
-                    Clear Filters
+                    Limpiar Filtros
                 </Button>
             )}
         </div>
         <Table>
         <TableHeader>
             <TableRow>
-            <TableHead>Plate</TableHead>
-            {isAdmin && <TableHead>Branch</TableHead>}
-            <TableHead>Entry Time</TableHead>
-            <TableHead>Exit Time</TableHead>
-            <TableHead className="text-right">Total Cost</TableHead>
+            <TableHead>Placa</TableHead>
+            {isAdmin && <TableHead>Sucursal</TableHead>}
+            <TableHead>Hora de Entrada</TableHead>
+            <TableHead>Hora de Salida</TableHead>
+            <TableHead className="text-right">Costo Total</TableHead>
             </TableRow>
         </TableHeader>
         <TableBody>
@@ -150,10 +150,10 @@ export default function ParkingHistoryTable({
             onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
             disabled={currentPage === 1 || records.length === 0}
             >
-            Previous
+            Anterior
             </Button>
             <span className="text-sm">
-                Page {currentPage > maxPage ? maxPage : currentPage} of {maxPage > 0 ? maxPage : 1}
+                Página {currentPage > maxPage ? maxPage : currentPage} de {maxPage > 0 ? maxPage : 1}
             </span>
             <Button
             variant="outline"
@@ -161,7 +161,7 @@ export default function ParkingHistoryTable({
             onClick={() => setCurrentPage(p => Math.min(maxPage, p + 1))}
             disabled={currentPage === maxPage || records.length === 0}
             >
-            Next
+            Siguiente
             </Button>
       </div>
     </>
