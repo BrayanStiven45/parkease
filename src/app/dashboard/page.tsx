@@ -80,7 +80,7 @@ export default function DashboardPage() {
 
     if (isAdmin) {
         return (
-            <div className="flex flex-col items-center justify-center h-full w-full bg-card text-center -m-4 sm:-m-6 lg:-m-8">
+            <div className="flex h-full flex-col items-center justify-center bg-card text-center -m-4 sm:-m-6 lg:-m-8">
                 <div className="flex flex-col items-center gap-4 p-8">
                     <Car className="h-16 w-16 text-primary" />
                     <h1 className="text-4xl font-bold font-headline">Bienvenido a ParkEase</h1>
