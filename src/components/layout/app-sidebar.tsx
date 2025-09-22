@@ -1,3 +1,4 @@
+
 'use client';
 import { usePathname } from 'next/navigation';
 import Link from 'next/link';
@@ -9,11 +10,12 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
 } from '@/components/ui/sidebar';
-import { Bot, Building, Car, History, LayoutDashboard } from 'lucide-react';
+import { Building, Car, History, LayoutDashboard, User } from 'lucide-react';
 import { useAuth } from '@/contexts/auth-context';
 
 const allMenuItems = [
   { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard, adminOnly: false },
+  { href: '/dashboard/profile', label: 'Mi Perfil', icon: User, adminOnly: false },
   { href: '/dashboard/history', label: 'Historial de Estacionamiento', icon: History, adminOnly: false },
   { href: '/dashboard/branches', label: 'Sucursales', icon: Building, adminOnly: true },
 ];
@@ -24,8 +26,8 @@ export default function AppSidebar() {
 
   const getFilteredMenuItems = () => {
     if (isAdmin) {
-      // Admin sees Branches and AI Suggester
-      return allMenuItems.filter(item => item.adminOnly || item.href === '/dashboard/history' || item.href === '/dashboard');
+      // Admin sees all items except the personal profile one
+      return allMenuItems.filter(item => item.href !== '/dashboard/profile');
     }
     // Regular users see everything except admin-only items
     return allMenuItems.filter(item => !item.adminOnly);
