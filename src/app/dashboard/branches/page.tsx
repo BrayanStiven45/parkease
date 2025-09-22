@@ -23,6 +23,7 @@ import {
 } from "@/components/ui/alert-dialog"
 import { useToast } from '@/hooks/use-toast';
 import { Input } from '@/components/ui/input';
+import { deleteUser } from '@/ai/flows/delete-user';
 
 
 interface BranchInfo {
@@ -115,12 +116,11 @@ export default function BranchesPage() {
         setIsDeleting(true);
         
         try {
-            // This will delete the user's document from the 'users' collection in Firestore.
-            await deleteDoc(doc(db, "users", branchToDelete.uid));
+            await deleteUser({ uid: branchToDelete.uid });
             
             toast({
                 title: "Éxito",
-                description: `Los datos de la sucursal "${branchToDelete.parkingLotName}" han sido eliminados. Por favor, elimina el usuario desde la consola de Firebase Authentication manualmente.`,
+                description: `La sucursal "${branchToDelete.parkingLotName}" ha sido eliminada completamente.`,
             });
             
         } catch (e: any) {
@@ -235,8 +235,7 @@ export default function BranchesPage() {
                     <AlertDialogHeader>
                     <AlertDialogTitle>¿Estás absolutamente seguro?</AlertDialogTitle>
                     <AlertDialogDescription>
-                        Esta acción eliminará permanentemente los datos de la sucursal de Firestore.
-                        Deberás eliminar manualmente el usuario desde Firebase Authentication. Esta acción no se puede deshacer.
+                        Esta acción eliminará permanentemente los datos de la sucursal de Firestore y su cuenta de Authentication. Esta acción no se puede deshacer.
                     </AlertDialogDescription>
                     </AlertDialogHeader>
                     <AlertDialogFooter>
